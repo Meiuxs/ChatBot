@@ -5,6 +5,7 @@ from app.api import auth, chat, sessions, settings as settings_router
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.api.deps import init_jwks
+from app.core.database import get_supabase
 import logging
 import time
 
@@ -24,6 +25,15 @@ async def _configure_logging():
     """在 uvicorn 初始化完成后设置日志（避免被 uvicorn 的 dictConfig 覆盖）"""
     setup_logging()
     await init_jwks()  # 预热 JWKS 公钥缓存
+
+    # 预热 Supabase HTTP 连接（避免首次请求的 TLS 握手延迟）
+    try:
+        client = get_supabase()
+        client.table("settings").select("id").limit(1).execute()
+        logger.info("Supabase connection warmed up")
+    except Exception:
+        logger.warning("Supabase warmup failed (non-critical)")
+
     logger.info("Application startup")
 
 
