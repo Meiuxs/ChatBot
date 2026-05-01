@@ -20,6 +20,7 @@ class AIProvider:
         model: str,
         temperature: float,
         max_tokens: int,
+        reasoning_effort: str | None = None,
     ) -> AsyncIterable[str]:
         raise NotImplementedError
 

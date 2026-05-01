@@ -142,7 +142,7 @@ export const useChatStore = defineStore('chat', () => {
     abortController.value?.abort()
     streaming.value = false
     abortController.value = null
-    persistSessions()
+    persistSessions().catch(() => {})
   }
 
   return {

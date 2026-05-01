@@ -9,10 +9,13 @@ import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import { useChatStore } from '../stores/chatStore'
 import { useSidebar } from '../composables/useSidebar'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 const route = useRoute()
 const chatStore = useChatStore()
 const sidebar = useSidebar()
 const settingsPanelRef = ref<InstanceType<typeof SettingsPanel> | null>(null)
+let isPersisting = false
 
 function openSettings() {
   settingsPanelRef.value?.open()
@@ -24,7 +27,6 @@ onMounted(async () => {
     chatStore.switchSession(route.params.id as string)
   }
   window.addEventListener('resize', sidebar.handleResize)
-  // 方案 3: 页面关闭/隐藏时持久化变更
   window.addEventListener('beforeunload', onPageHide)
   document.addEventListener('visibilitychange', onVisibilityChange)
 })
@@ -35,13 +37,36 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 
-async function onPageHide() {
-  await chatStore.persistSessions()
+/** 页面关闭前同步（使用 keepalive 确保请求发出去） */
+function onPageHide() {
+  if (isPersisting) return
+  const sessions = chatStore.sessions
+  if (sessions.length === 0) return
+  try {
+    const raw = localStorage.getItem('chatbot_auth_token')
+    const token = raw ? JSON.parse(raw) : null
+    fetch(`${API_BASE}/api/sessions/sync`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ sessions }),
+      keepalive: true,
+    })
+  } catch {
+    // fetch + keepalive 失败时降级到 localStorage，由 chatService 已有逻辑处理
+  }
 }
 
+/** 页面隐藏到后台时同步（async/await 在此场景下安全可用） */
 async function onVisibilityChange() {
-  if (document.visibilityState === 'hidden') {
+  if (document.visibilityState !== 'hidden' || isPersisting) return
+  isPersisting = true
+  try {
     await chatStore.persistSessions()
+  } finally {
+    isPersisting = false
   }
 }
 </script>
