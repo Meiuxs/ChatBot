@@ -23,16 +23,39 @@ _AUTH_ERROR_MAP = {
 }
 
 
-def _handle_auth_error(e: Exception, default_status: int, default_msg: str) -> HTTPException:
-    """将 Supabase AuthApiError 转为 HTTPException，未识别的错误记录日志并返回兜底提示。"""
+def _extract_error(e: Exception) -> str:
+    """从各种异常类型中提取错误描述字符串，优先取 AuthApiError.code。"""
     if isinstance(e, AuthApiError):
-        code = e.code or ""
+        return (e.code or "").lower()
+    return str(e).lower()
+
+
+def _handle_auth_error(e: Exception, default_status: int, default_msg: str) -> HTTPException:
+    """将 Supabase AuthApiError / 普通 Exception 转为 HTTPException。"""
+    # 1) 优先精确匹配 AuthApiError.code
+    if isinstance(e, AuthApiError) and e.code:
+        code = e.code
         if code in _AUTH_ERROR_MAP:
             status, detail = _AUTH_ERROR_MAP[code]
             return HTTPException(status_code=status, detail=detail)
         logger.warning("Unhandled AuthApiError: code=%s message=%s", code, e.message)
 
-    logger.error("Auth unexpected error: %s", e)
+    # 2) 兜底：字符串模糊匹配（覆盖非 AuthApiError 异常和未知 code）
+    msg = _extract_error(e)
+    if "rate limit" in msg or "too many" in msg:
+        return HTTPException(status_code=429, detail="请求过于频繁，请稍后再试")
+    if "already registered" in msg or "already been registered" in msg:
+        return HTTPException(status_code=409, detail="该邮箱已被注册")
+    if "invalid email" in msg or "email_address_invalid" in msg:
+        return HTTPException(status_code=400, detail="邮箱格式不正确")
+    if ("password" in msg and ("characters" in msg or "character" in msg or "length" in msg)) or "weak_password" in msg:
+        return HTTPException(status_code=400, detail="密码强度不足，请使用至少 6 位字符")
+    if "invalid login credentials" in msg or "invalid_credentials" in msg:
+        return HTTPException(status_code=401, detail="邮箱或密码错误")
+    if "user not found" in msg or "user_not_found" in msg:
+        return HTTPException(status_code=401, detail="邮箱或密码错误")
+
+    logger.error("Auth unexpected error (type=%s, msg=%s): %s", type(e).__name__, msg, e)
     return HTTPException(status_code=default_status, detail=default_msg)
 
 
