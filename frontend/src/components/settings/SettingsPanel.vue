@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { useToast } from '../../composables/useToast'
+import type { Settings } from '../../types/settings'
 
 const { showToast } = useToast()
 import TabModel from './TabModel.vue'
@@ -13,13 +14,19 @@ const settingsStore = useSettingsStore()
 const isOpen = ref(false)
 const activeTab = ref<'model' | 'app' | 'about'>('model')
 
+// 打开面板时快照一份原始设置，关闭未保存时还原
+let _snapshot: Settings | null = null
+
 const tabs = [
   { key: 'model' as const, label: '模型配置' },
   { key: 'app' as const, label: '应用设置' },
   { key: 'about' as const, label: '关于' },
 ]
 
-function open(): void {
+async function open(): Promise<void> {
+  // 从后端拉取最新设置（覆盖 store 中可能残留的未保存修改）
+  await settingsStore.loadSettings()
+  _snapshot = { ...settingsStore.settings }
   isOpen.value = true
   activeTab.value = 'model'
 }
@@ -30,18 +37,27 @@ function close(): void {
 
 function handleOverlayClick(e: MouseEvent): void {
   if ((e.target as HTMLElement).classList.contains('settings-overlay')) {
-    close()
+    cancelAndClose()
   }
 }
 
 function handleKeydown(e: KeyboardEvent): void {
   if (e.key === 'Escape' && isOpen.value) {
-    close()
+    cancelAndClose()
   }
+}
+
+function cancelAndClose(): void {
+  // 未保存：还原快照
+  if (_snapshot) {
+    settingsStore.updateSettings(_snapshot)
+  }
+  close()
 }
 
 function saveSettings(): void {
   settingsStore.saveSettings()
+  _snapshot = { ...settingsStore.settings }
   showToast('设置已保存', 'success')
 }
 
@@ -78,7 +94,7 @@ onUnmounted(() => {
         <button
           class="btn-icon settings-close"
           title="关闭"
-          @click="close"
+          @click="cancelAndClose"
         >
           <svg
             width="18"

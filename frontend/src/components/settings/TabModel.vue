@@ -12,16 +12,6 @@ import type { Settings } from '../../types/settings'
 const settingsStore = useSettingsStore()
 
 const apiKeyVisible = ref(false)
-const customModel = ref(
-  !getModelsForProvider(settingsStore.settings.provider)
-    .some((m) => m.value === settingsStore.settings.model)
-)
-
-// 当设置从后端加载后，重新检测是否是自定义模型
-watch(() => settingsStore.settings.model, (val) => {
-  customModel.value = !getModelsForProvider(settingsStore.settings.provider)
-    .some((m) => m.value === val)
-})
 
 function toggleApiKeyVisibility(): void {
   apiKeyVisible.value = !apiKeyVisible.value
@@ -32,7 +22,6 @@ const currentProvider = computed({
   get: () => settingsStore.settings.provider,
   set: (val: string) => {
     settingsStore.updateSettings({ provider: val } as Partial<Settings>)
-    // 切换厂商时自动选择该厂商的第一个模型
     const models = getModelsForProvider(val)
     if (models.length > 0) {
       settingsStore.updateSettings({ model: models[0].value } as Partial<Settings>)
@@ -40,7 +29,6 @@ const currentProvider = computed({
   },
 })
 
-// 当前厂商可选的模型列表
 const availableModels = computed(() => getModelsForProvider(currentProvider.value))
 
 // 模型
@@ -48,7 +36,6 @@ const currentModel = computed({
   get: () => settingsStore.settings.model,
   set: (val: string) => {
     settingsStore.updateSettings({ model: val } as Partial<Settings>)
-    customModel.value = !availableModels.value.some((m) => m.value === val)
   },
 })
 
@@ -73,15 +60,6 @@ const maxTokens = computed({
   },
 })
 
-
-function switchToSelectMode(): void {
-  customModel.value = false
-  const models = getModelsForProvider(currentProvider.value)
-  if (models.length > 0) {
-    settingsStore.updateSettings({ model: models[0].value } as Partial<Settings>)
-  }
-}
-
 const activeProviderName = computed(() => getProviderDisplayName(currentProvider.value))
 
 // 当前模型的最大 token 限制
@@ -94,20 +72,6 @@ watch(currentModel, () => {
     settingsStore.updateSettings({ maxTokens: limit } as Partial<Settings>)
   }
 })
-
-function toggleCustomModel(): void {
-  customModel.value = true
-}
-
-function onModelSelectChange(event: Event): void {
-  const val = (event.target as HTMLSelectElement).value
-  if (val === '__custom__') {
-    customModel.value = true
-  } else {
-    settingsStore.updateSettings({ model: val } as Partial<Settings>)
-    customModel.value = false
-  }
-}
 </script>
 
 <template>
@@ -182,21 +146,12 @@ function onModelSelectChange(event: Event): void {
 
   <!-- Model Select -->
   <div class="setting-group">
-    <div class="model-select-row">
-      <label for="model">模型</label>
-      <button
-        v-if="!customModel"
-        class="btn-link"
-        type="button"
-        @click="toggleCustomModel"
-      >自定义模型…</button>
-    </div>
+    <label for="model">模型</label>
     <select
-      v-if="!customModel"
       id="model"
       class="setting-select"
       :value="currentModel"
-      @change="onModelSelectChange"
+      @change="currentModel = ($event.target as HTMLSelectElement).value"
     >
       <option
         v-for="option in availableModels"
@@ -205,26 +160,7 @@ function onModelSelectChange(event: Event): void {
       >
         {{ option.label }}
       </option>
-      <option disabled>──────────</option>
-      <option value="__custom__">自定义模型…</option>
     </select>
-    <div v-else class="input-with-action">
-      <input
-        id="modelCustom"
-        type="text"
-        class="setting-input"
-        placeholder="输入模型名称（如 gpt-4o-mini）"
-        :value="currentModel"
-        @input="currentModel = ($event.target as HTMLInputElement).value"
-      />
-      <button
-        class="btn-toggle-visibility"
-        title="返回选择模式"
-        @click="switchToSelectMode"
-      >
-        ✕
-      </button>
-    </div>
   </div>
 
   <!-- Temperature -->
@@ -263,8 +199,6 @@ function onModelSelectChange(event: Event): void {
     />
     <p class="api-key-hint">当前模型最大支持 {{ modelMaxTokens.toLocaleString() }} tokens</p>
   </div>
-
-
 </template>
 
 <style scoped>
@@ -298,36 +232,6 @@ function onModelSelectChange(event: Event): void {
   font-variant-numeric: tabular-nums;
 }
 
-/* Model select row */
-.model-select-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.model-select-row label {
-  margin-bottom: 0;
-}
-
-.btn-link {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--accent);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-  transition: color var(--transition);
-}
-
-.btn-link:hover {
-  color: var(--accent-hover);
-  text-decoration: underline;
-}
-
-/* API Key Input */
 .input-with-action {
   position: relative;
   display: flex;
@@ -391,7 +295,6 @@ function onModelSelectChange(event: Event): void {
   color: var(--text-secondary);
 }
 
-/* Select */
 .setting-select {
   width: 100%;
   background: var(--bg-surface);
@@ -416,7 +319,6 @@ function onModelSelectChange(event: Event): void {
   box-shadow: 0 0 0 3px var(--accent-light);
 }
 
-/* Range Slider */
 .setting-range {
   width: 100%;
   height: 6px;
@@ -450,5 +352,4 @@ function onModelSelectChange(event: Event): void {
   cursor: pointer;
   border: none;
 }
-
 </style>
