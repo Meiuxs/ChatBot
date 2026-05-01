@@ -3,6 +3,8 @@ const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const stopBtn = document.getElementById('stopBtn');
+const thinkingBar = document.getElementById('thinkingBar');
+const thinkingSwitch = document.getElementById('thinkingSwitch');
 const chatTitle = document.getElementById('chatTitle');
 const apiStatus = document.getElementById('apiStatus');
 const sidebar = document.getElementById('sidebar');
@@ -15,7 +17,14 @@ const settingsPanel = document.getElementById('settingsPanel');
 const closeSettings = document.getElementById('closeSettings');
 const apiKeyInput = document.getElementById('apiKey');
 const toggleApiKeyVisibility = document.getElementById('toggleApiKeyVisibility');
+const providerSelect = document.getElementById('provider');
 const modelSelect = document.getElementById('model');
+const toggleCustomModel = document.getElementById('toggleCustomModel');
+const customModelGroup = document.getElementById('customModelGroup');
+const modelCustom = document.getElementById('modelCustom');
+const providerName = document.getElementById('providerName');
+const apiKeyHint = document.getElementById('apiKeyHint');
+const aboutProvider = document.getElementById('aboutProvider');
 const temperatureSlider = document.getElementById('temperature');
 const maxTokensSlider = document.getElementById('maxTokens');
 const tempValue = document.getElementById('tempValue');
@@ -49,6 +58,12 @@ const userDropdown = document.getElementById('userDropdown');
 const userDropdownEmail = document.getElementById('userDropdownEmail');
 const logoutBtn = document.getElementById('logoutBtn');
 
+// Settings Tab Elements
+const settingsTabs = document.querySelectorAll('.settings-tab');
+const settingsTabContents = document.querySelectorAll('.settings-tab-content');
+const aboutUserEmail = document.getElementById('aboutUserEmail');
+const aboutModel = document.getElementById('aboutModel');
+
 // Storage Keys
 const STORAGE_KEYS = {
   settings: 'chatbot_settings',
@@ -61,17 +76,47 @@ const STORAGE_KEYS = {
 // Default Settings
 const DEFAULT_SETTINGS = {
   apiKey: '',
-  model: 'gpt-3.5-turbo',
+  provider: 'openai',
+  model: 'gpt-4o',
   temperature: 0.7,
   maxTokens: 2000
+};
+
+// Provider data
+const MODELS_BY_PROVIDER = {
+  openai: [
+    { value: 'gpt-4o', label: 'GPT-4o' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { value: 'gpt-4', label: 'GPT-4' },
+    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
+    { value: 'o1-mini', label: 'o1 Mini' },
+    { value: 'o1-preview', label: 'o1 Preview' },
+  ],
+  deepseek: [
+    { value: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash' },
+    { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro' },
+  ],
+};
+
+const PROVIDER_NAMES = {
+  openai: 'OpenAI',
+  deepseek: 'DeepSeek',
+};
+
+const PROVIDER_ENDPOINTS = {
+  openai: 'https://api.openai.com/v1/chat/completions',
+  deepseek: 'https://api.deepseek.com/chat/completions',
 };
 
 // State
 let settings = { ...DEFAULT_SETTINGS };
 let sessions = [];
 let currentSessionId = null;
+let renamingSessionId = null;
 let currentAbortController = null;
 let isGenerating = false;
+let thinkingEnabled = false;
 let currentUser = null;
 
 // Configure marked
@@ -279,14 +324,58 @@ function loadSettings() {
   applySettingsToUI();
 }
 
+// Populate model options based on selected provider
+function populateModelOptions() {
+  const provider = providerSelect.value;
+  const models = MODELS_BY_PROVIDER[provider] || [];
+
+  modelSelect.innerHTML = models.map(m =>
+    `<option value="${m.value}">${m.label}</option>`
+  ).join('') + '<option disabled>──────────</option><option value="__custom__">自定义模型…</option>';
+
+  // Check if current model belongs to this provider, or is custom
+  const modelInList = models.some(m => m.value === settings.model);
+  const isCustomModel = !Object.values(MODELS_BY_PROVIDER).flat().some(m => m.value === settings.model) && settings.model;
+
+  if (modelInList) {
+    modelSelect.value = settings.model;
+    customModelGroup.style.display = 'none';
+    modelSelect.style.display = '';
+  } else if (isCustomModel) {
+    modelSelect.value = '__custom__';
+    customModelGroup.style.display = '';
+    modelCustom.value = settings.model;
+    modelSelect.style.display = 'none';
+  } else {
+    // Fallback to first model
+    settings.model = models.length > 0 ? models[0].value : '';
+    modelSelect.value = settings.model;
+    customModelGroup.style.display = 'none';
+    modelSelect.style.display = '';
+  }
+}
+
 // Apply settings to UI elements
 function applySettingsToUI() {
   apiKeyInput.value = settings.apiKey;
-  modelSelect.value = settings.model;
+  providerSelect.value = settings.provider || 'openai';
+  populateModelOptions();
   temperatureSlider.value = settings.temperature;
   maxTokensSlider.value = settings.maxTokens;
   tempValue.textContent = settings.temperature.toFixed(1);
   tokensValue.textContent = settings.maxTokens;
+
+  // Update provider-specific UI
+  updateProviderUI();
+  updateThinkingToggle();
+}
+
+// Update UI elements that depend on the selected provider
+function updateProviderUI() {
+  const displayName = PROVIDER_NAMES[providerSelect.value] || 'OpenAI';
+  providerName.textContent = displayName;
+  apiKeyInput.placeholder = `${displayName} API Key`;
+  apiKeyHint.innerHTML = `请填写 <strong>${displayName}</strong> API Key`;
 }
 
 // Load sessions from localStorage
@@ -328,11 +417,21 @@ function updateApiStatus() {
 // Save settings to localStorage
 function saveSettings() {
   settings.apiKey = apiKeyInput.value.trim();
-  settings.model = modelSelect.value;
+  settings.provider = providerSelect.value;
+
+  if (customModelGroup.style.display !== 'none') {
+    settings.model = modelCustom.value.trim() || settings.model;
+  } else if (modelSelect.value === '__custom__') {
+    settings.model = modelCustom.value.trim() || settings.model;
+  } else {
+    settings.model = modelSelect.value;
+  }
+
   settings.temperature = parseFloat(temperatureSlider.value);
   settings.maxTokens = parseInt(maxTokensSlider.value);
   localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
   updateApiStatus();
+  updateAboutTab();
   showToast('设置已保存', false, 'success');
 }
 
@@ -348,6 +447,7 @@ function saveCurrentSessionId() {
 
 // Create new session
 function createNewSession() {
+  renamingSessionId = null;
   const session = {
     id: generateId(),
     title: '新对话',
@@ -375,6 +475,7 @@ function deleteSession(id, event) {
     '确认删除',
     `会话「${session.title}」删除后无法恢复，确定要删除吗？`,
     () => {
+      if (renamingSessionId === id) renamingSessionId = null;
       sessions = sessions.filter(s => s.id !== id);
       if (sessions.length === 0) {
         createNewSession();
@@ -398,10 +499,55 @@ function switchSession(id) {
   }
   currentSessionId = id;
   saveCurrentSessionId();
+  renamingSessionId = null;
   renderSessionList();
   renderMessages();
   updateChatTitle();
   closeSidebarMobile();
+}
+
+// Rename session
+function startRename(id, event) {
+  if (event) event.stopPropagation();
+  if (isGenerating) {
+    showToast('请等待当前回复完成', true);
+    return;
+  }
+  renamingSessionId = id;
+  renderSessionList();
+}
+
+function saveRename(value, id) {
+  const session = sessions.find(s => s.id === id);
+  if (!session) return;
+  const trimmed = value.trim();
+  if (trimmed && trimmed !== session.title) {
+    session.title = trimmed.slice(0, 100);
+    saveSessions();
+    renderSessionList();
+    updateChatTitle();
+    showToast('会话已重命名');
+  } else {
+    renamingSessionId = null;
+    renderSessionList();
+  }
+  renamingSessionId = null;
+}
+
+function cancelRename(id) {
+  renamingSessionId = null;
+  renderSessionList();
+}
+
+function onRenameKeydown(event, id) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const input = event.target;
+    saveRename(input.value, id);
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    cancelRename(id);
+  }
 }
 
 // Get current session
@@ -422,21 +568,39 @@ function renderSessionList() {
     `;
     return;
   }
-  sessionList.innerHTML = sessions.map(session => `
-    <div class="session-item ${session.id === currentSessionId ? 'active' : ''}"
-         onclick="switchSession('${session.id}')">
+  sessionList.innerHTML = sessions.map(session => {
+    const isEditing = renamingSessionId === session.id;
+    return `
+    <div class="session-item ${session.id === currentSessionId ? 'active' : ''} ${isEditing ? 'editing' : ''}"
+         onclick="${isEditing ? '' : `switchSession('${session.id}')`}">
       <svg class="session-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
       </svg>
-      <span class="session-item-title">${escapeHtml(session.title)}</span>
+      ${isEditing
+        ? `<input class="session-item-input" value="${escapeHtml(session.title)}" maxlength="100"
+             onfocus="this.select()" data-rename-id="${session.id}"
+             onkeydown="onRenameKeydown(event, '${session.id}')"
+             onblur="saveRename(this.value, '${session.id}')">`
+        : `<span class="session-item-title">${escapeHtml(session.title)}</span>`
+      }
+      <button class="session-item-edit" onclick="startRename('${session.id}', event)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+        </svg>
+      </button>
       <button class="session-item-delete" onclick="deleteSession('${session.id}', event)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+  // Auto-focus rename input if active
+  if (renamingSessionId) {
+    const input = document.querySelector(`.session-item.editing .session-item-input`);
+    if (input) setTimeout(() => input.focus(), 0);
+  }
 }
 
 // Render messages
@@ -485,8 +649,26 @@ function renderMessages() {
         </div>
       `;
     }
+    const hasReasoning = msg.reasoning && msg.reasoning.length > 0;
+    const charCount = hasReasoning ? `约 ${msg.reasoning.length} 字符` : '';
+    const reasoningBlock = hasReasoning ? `
+      <div class="reasoning-wrapper">
+        <button class="reasoning-toggle" onclick="toggleReasoning(this)">
+          <svg class="reasoning-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+          <span>思考过程</span>
+          <span class="reasoning-badge">AI</span>
+          <span class="reasoning-count">${charCount}</span>
+        </button>
+        <div class="reasoning-content">
+          <p>${escapeHtml(msg.reasoning)}</p>
+        </div>
+      </div>
+    ` : '';
     return `
       <div class="message assistant">
+        ${reasoningBlock}
         <div class="message-content">${marked.parse(msg.content)}</div>
       </div>
     `;
@@ -497,17 +679,55 @@ function renderMessages() {
 // Update chat title
 function updateChatTitle() {
   const session = getCurrentSession();
-  if (session && session.messages.length > 0) {
-    const firstUserMsg = session.messages.find(m => m.role === 'user');
-    if (firstUserMsg) {
-      session.title = firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
-      chatTitle.textContent = session.title;
-      renderSessionList();
-      saveSessions();
+  if (session) {
+    if (headerRenaming) {
+      chatTitle.innerHTML = `<input class="chat-title-input" value="${escapeHtml(session.title)}" maxlength="100" id="header-rename-input">`;
+      setTimeout(() => {
+        const input = document.getElementById('header-rename-input');
+        if (input) {
+          input.focus();
+          input.select();
+          input.onkeydown = (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); saveHeaderRename(input.value); }
+            else if (e.key === 'Escape') { e.preventDefault(); cancelHeaderRename(); }
+          };
+          input.onblur = () => saveHeaderRename(input.value);
+        }
+      }, 0);
+    } else {
+      chatTitle.textContent = session.title || '新对话';
     }
   } else {
     chatTitle.textContent = '新对话';
   }
+}
+
+let headerRenaming = false;
+
+function startHeaderRename() {
+  if (isGenerating) return;
+  if (!currentSessionId) return;
+  headerRenaming = true;
+  updateChatTitle();
+}
+
+function saveHeaderRename(value) {
+  headerRenaming = false;
+  const session = getCurrentSession();
+  if (!session) { updateChatTitle(); return; }
+  const trimmed = value.trim();
+  if (trimmed && trimmed !== session.title) {
+    session.title = trimmed.slice(0, 100);
+    saveSessions();
+    renderSessionList();
+    showToast('会话已重命名');
+  }
+  updateChatTitle();
+}
+
+function cancelHeaderRename() {
+  headerRenaming = false;
+  updateChatTitle();
 }
 
 // Set generating state
@@ -517,12 +737,16 @@ function setGeneratingState(generating) {
     sendBtn.style.display = 'none';
     stopBtn.style.display = 'flex';
     chatInput.disabled = true;
+    thinkingSwitch.style.pointerEvents = 'none';
+    thinkingBar.style.opacity = '0.5';
   } else {
     sendBtn.style.display = 'flex';
     stopBtn.style.display = 'none';
     chatInput.disabled = false;
     chatInput.focus();
     autoResizeTextarea();
+    thinkingSwitch.style.pointerEvents = '';
+    thinkingBar.style.opacity = '';
   }
 }
 
@@ -619,21 +843,29 @@ function retryMessage(errorIndex) {
 async function streamResponse(session) {
   currentAbortController = new AbortController();
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const endpoint = PROVIDER_ENDPOINTS[settings.provider] || PROVIDER_ENDPOINTS.openai;
+
+  const body = {
+    model: settings.model,
+    messages: session.messages
+      .filter(m => m.role !== 'error')
+      .map(m => ({ role: m.role, content: m.content })),
+    stream: true,
+    temperature: settings.temperature,
+    max_tokens: settings.maxTokens,
+  };
+
+  if (thinkingEnabled) {
+    body.reasoning_effort = 'high';
+  }
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${settings.apiKey}`
     },
-    body: JSON.stringify({
-      model: settings.model,
-      messages: session.messages
-        .filter(m => m.role !== 'error')
-        .map(m => ({ role: m.role, content: m.content })),
-      temperature: settings.temperature,
-      max_tokens: settings.maxTokens,
-      stream: true
-    }),
+    body: JSON.stringify(body),
     signal: currentAbortController.signal
   });
 
@@ -648,16 +880,48 @@ async function streamResponse(session) {
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let assistantMessage = { role: 'assistant', content: '' };
+  let assistantMessage = { role: 'assistant', content: '', reasoning: '' };
 
   removeLoadingMessage();
 
   // Create message element
   const msgElement = document.createElement('div');
   msgElement.className = 'message assistant';
-  msgElement.innerHTML = '<div class="message-content"></div>';
+
+  // Reasoning wrapper (hidden initially, shown when reasoning_content arrives)
+  const reasoningWrapper = document.createElement('div');
+  reasoningWrapper.className = 'reasoning-wrapper';
+  reasoningWrapper.style.display = 'none';
+
+  const reasoningToggleBtn = document.createElement('button');
+  reasoningToggleBtn.className = 'reasoning-toggle';
+  reasoningToggleBtn.innerHTML = `
+    <svg class="reasoning-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M9 18l6-6-6-6"/>
+    </svg>
+    <span>思考过程</span>
+    <span class="reasoning-badge">AI</span>
+    <span class="reasoning-count"></span>
+  `;
+  reasoningToggleBtn.addEventListener('click', function() {
+    const content = this.nextElementSibling;
+    const chevron = this.querySelector('.reasoning-chevron');
+    content.classList.toggle('open');
+    chevron.classList.toggle('open');
+  });
+
+  const reasoningContentDiv = document.createElement('div');
+  reasoningContentDiv.className = 'reasoning-content';
+
+  reasoningWrapper.appendChild(reasoningToggleBtn);
+  reasoningWrapper.appendChild(reasoningContentDiv);
+
+  const contentElement = document.createElement('div');
+  contentElement.className = 'message-content';
+
+  msgElement.appendChild(reasoningWrapper);
+  msgElement.appendChild(contentElement);
   chatMessages.appendChild(msgElement);
-  const contentElement = msgElement.querySelector('.message-content');
 
   while (true) {
     const { done, value } = await reader.read();
@@ -672,13 +936,23 @@ async function streamResponse(session) {
         if (data === '[DONE]') continue;
         try {
           const parsed = JSON.parse(data);
-          const delta = parsed.choices?.[0]?.delta?.content;
-          if (delta) {
-            assistantMessage.content += delta;
+          const delta = parsed.choices?.[0]?.delta;
+          if (delta?.reasoning_content) {
+            assistantMessage.reasoning += delta.reasoning_content;
+            reasoningWrapper.style.display = '';
+            reasoningContentDiv.textContent = assistantMessage.reasoning;
+            reasoningToggleBtn.querySelector('.reasoning-count').textContent =
+              `约 ${assistantMessage.reasoning.length} 字符`;
+            scrollToBottom();
+          }
+          if (delta?.content) {
+            assistantMessage.content += delta.content;
             contentElement.innerHTML = marked.parse(assistantMessage.content);
             scrollToBottom();
           }
-        } catch (e) {}
+        } catch (e) {
+          // SSE JSON parse error, skip invalid data
+        }
       }
     }
   }
@@ -692,6 +966,29 @@ async function streamResponse(session) {
 function removeLoadingMessage() {
   const loading = document.getElementById('loadingMessage');
   if (loading) loading.remove();
+}
+
+// Toggle reasoning visibility
+function toggleReasoning(btn) {
+  const wrapper = btn.parentElement;
+  const content = wrapper.querySelector('.reasoning-content');
+  const chevron = btn.querySelector('.reasoning-chevron');
+  content.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+// Update thinking toggle visibility
+function updateThinkingToggle() {
+  const showThinking = providerSelect.value === 'deepseek';
+  if (showThinking) {
+    thinkingBar.style.display = 'flex';
+  } else {
+    thinkingBar.style.display = 'none';
+    thinkingEnabled = false;
+    thinkingBar.classList.remove('active');
+    thinkingSwitch.classList.remove('active');
+    thinkingSwitch.setAttribute('aria-checked', 'false');
+  }
 }
 
 // Scroll to bottom
@@ -758,6 +1055,26 @@ function toggleSidebarMobile() {
 function closeSidebarMobile() {
   sidebar.classList.remove('open');
   sidebarOverlay.classList.remove('show');
+}
+
+// Settings Tab switching
+function switchSettingsTab(tabId) {
+  settingsTabs.forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === tabId);
+  });
+  settingsTabContents.forEach(content => {
+    content.classList.toggle('active', content.id === `tab-${tabId}`);
+  });
+}
+
+// Update about tab info
+function updateAboutTab() {
+  if (currentUser) {
+    aboutUserEmail.textContent = currentUser.email;
+  }
+  const displayName = PROVIDER_NAMES[settings.provider] || 'OpenAI';
+  aboutProvider.textContent = displayName;
+  aboutModel.textContent = settings.model;
 }
 
 // Setup event listeners
@@ -880,6 +1197,15 @@ function setupEventListeners() {
       regPassword.classList.remove('error');
       clearAuthError(registerError);
     }
+    // 更新密码强度指示器
+    const bars = document.querySelectorAll('#passwordStrength .password-strength-bar');
+    const strength = getPasswordStrength(regPassword.value);
+    bars.forEach((bar, i) => {
+      bar.className = 'password-strength-bar';
+      if (i < strength.score) {
+        bar.classList.add(strength.label || 'weak');
+      }
+    });
   });
   regConfirm.addEventListener('input', () => {
     if (regConfirm.classList.contains('error')) {
@@ -910,6 +1236,15 @@ function setupEventListeners() {
   });
   chatInput.addEventListener('input', autoResizeTextarea);
 
+  // Thinking toggle switch
+  thinkingSwitch.addEventListener('click', () => {
+    if (isGenerating) return;
+    thinkingEnabled = !thinkingEnabled;
+    thinkingBar.classList.toggle('active');
+    thinkingSwitch.classList.toggle('active');
+    thinkingSwitch.setAttribute('aria-checked', thinkingEnabled.toString());
+  });
+
   // Stop generation
   stopBtn.addEventListener('click', stopGeneration);
 
@@ -920,9 +1255,19 @@ function setupEventListeners() {
   // Settings toggle
   toggleSettings.addEventListener('click', () => {
     settingsPanel.classList.add('open');
+    updateAboutTab();
   });
   closeSettings.addEventListener('click', () => {
     settingsPanel.classList.remove('open');
+  });
+
+  // Settings tabs
+  settingsTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      switchSettingsTab(tab.dataset.tab);
+      // 保存按钮只在"模型配置"Tab 显示
+      saveSettingsBtn.style.display = tab.dataset.tab === 'model' ? 'block' : 'none';
+    });
   });
 
   // API Key visibility toggle
@@ -946,8 +1291,90 @@ function setupEventListeners() {
     tokensValue.textContent = maxTokensSlider.value;
   });
 
+  // Provider select - update model list and UI
+  providerSelect.addEventListener('change', () => {
+    // Save current provider
+    settings.provider = providerSelect.value;
+    // Populate models for new provider
+    const models = MODELS_BY_PROVIDER[providerSelect.value] || [];
+    settings.model = models.length > 0 ? models[0].value : '';
+    populateModelOptions();
+    updateProviderUI();
+    updateAboutTab();
+    updateThinkingToggle();
+  });
+
+  // Custom model toggle
+  toggleCustomModel.addEventListener('click', (e) => {
+    e.preventDefault();
+    modelSelect.style.display = 'none';
+    customModelGroup.style.display = '';
+    modelCustom.value = settings.model;
+    modelCustom.focus();
+  });
+
+  // Model select - handle custom option
+  modelSelect.addEventListener('change', () => {
+    if (modelSelect.value === '__custom__') {
+      modelSelect.style.display = 'none';
+      customModelGroup.style.display = '';
+      modelCustom.value = '';
+      modelCustom.focus();
+    } else {
+      settings.model = modelSelect.value;
+      updateAboutTab();
+    }
+  });
+
+  // Custom model input - update model on Enter
+  modelCustom.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      settings.model = modelCustom.value.trim();
+      updateAboutTab();
+      showToast('自定义模型已设置');
+    }
+  });
+
   // Save settings
   saveSettingsBtn.addEventListener('click', saveSettings);
+
+  // Theme toggle (placeholder for future implementation)
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.theme-option').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showToast(`主题切换将在后续版本支持: ${btn.dataset.theme}`, false, 'success');
+    });
+  });
+
+  // Export / Import (placeholder)
+  document.getElementById('exportData')?.addEventListener('click', () => {
+    showToast('导出功能将在后续版本支持');
+  });
+  document.getElementById('importData')?.addEventListener('click', () => {
+    showToast('导入功能将在后续版本支持');
+  });
+  document.getElementById('addShortcut')?.addEventListener('click', () => {
+    showToast('快捷指令编辑将在后续版本支持');
+  });
+
+  // Clear all data
+  document.getElementById('clearAllData')?.addEventListener('click', () => {
+    showModal('清除所有数据', '确定要清除所有会话数据和设置吗？此操作不可恢复。', () => {
+      localStorage.clear();
+      sessions = [];
+      settings = { ...DEFAULT_SETTINGS };
+      currentSessionId = null;
+      initDefaultAccount();
+      loadSettings();
+      loadSessions();
+      renderSessionList();
+      createNewSession();
+      updateApiStatus();
+      showToast('所有数据已清除', false, 'success');
+    });
+  });
 
   // Modal actions
   modalCancel.addEventListener('click', hideModal);

@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -36,6 +37,7 @@
         </div>
         <div class="auth-error" id="loginError"></div>
         <button type="submit" class="btn-primary auth-submit" id="loginSubmit">登录</button>
+        <p class="auth-hint">按 Enter 登录</p>
         <p class="auth-switch">还没有账号？<button type="button" class="auth-switch-btn" id="showRegister">注册</button></p>
       </form>
 
@@ -48,6 +50,13 @@
         <div class="auth-field">
           <label for="regPassword">密码</label>
           <input type="password" id="regPassword" class="auth-input" placeholder="至少 6 位" autocomplete="new-password" required minlength="6">
+          <div class="password-strength" id="passwordStrength">
+            <span class="password-strength-bar"></span>
+            <span class="password-strength-bar"></span>
+            <span class="password-strength-bar"></span>
+            <span class="password-strength-bar"></span>
+            <span class="password-strength-bar"></span>
+          </div>
         </div>
         <div class="auth-field">
           <label for="regConfirm">确认密码</label>
@@ -89,7 +98,7 @@
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-        <h1 class="chat-title" id="chatTitle">新对话</h1>
+        <h1 class="chat-title" id="chatTitle" onclick="startHeaderRename()" style="cursor:pointer">新对话</h1>
         <!-- API Key 状态指示器 -->
         <div class="api-status" id="apiStatus" title="API Key 未配置">
           <span class="api-status-dot"></span>
@@ -110,7 +119,7 @@
           </button>
           <div class="user-dropdown" id="userDropdown">
             <div class="user-dropdown-header">
-              <span class="user-dropdown-email" id="userDropdownEmail">user@email.com</span>
+              <span class="user-dropdown-email" id="userDropdownEmail">-</span>
             </div>
             <div class="user-dropdown-divider"></div>
             <button class="user-dropdown-item" id="logoutBtn">
@@ -126,6 +135,19 @@
       </header>
 
       <div class="chat-messages" id="chatMessages"></div>
+
+      <!-- 思考模式切换（仅 DeepSeek 显示） -->
+      <div class="thinking-bar" id="thinkingBar" style="display:none">
+        <div class="thinking-bar-left">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5z"/>
+          </svg>
+          <span>深度思考模式</span>
+        </div>
+        <button class="thinking-switch" id="thinkingSwitch" role="switch" title="切换思考模式">
+          <span class="thinking-switch-knob"></span>
+        </button>
+      </div>
 
       <div class="chat-input-container">
         <textarea
@@ -160,46 +182,214 @@
           </svg>
         </button>
       </div>
+
+      <!-- 设置 Tab 导航 -->
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="model">模型配置</button>
+        <button class="settings-tab" data-tab="app">应用设置</button>
+        <button class="settings-tab" data-tab="about">关于</button>
+      </div>
+
       <div class="settings-content">
-        <div class="setting-group">
-          <label for="apiKey">API Key</label>
-          <div class="input-with-action">
-            <input type="password" id="apiKey" class="setting-input" placeholder="sk-...">
-            <button class="btn-toggle-visibility" id="toggleApiKeyVisibility" title="显示/隐藏">
-              <svg class="icon-eye" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
+        <!-- 模型配置 Tab -->
+        <div class="settings-tab-content active" id="tab-model">
+          <div class="setting-group">
+            <label for="apiKey">API Key</label>
+            <div class="input-with-action">
+              <input type="password" id="apiKey" class="setting-input" placeholder="OpenAI API Key">
+              <button class="btn-toggle-visibility" id="toggleApiKeyVisibility" title="显示/隐藏">
+                <svg class="icon-eye" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="icon-eye-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+            <p class="api-key-hint" id="apiKeyHint">请填写 <strong id="providerName">OpenAI</strong> API Key</p>
+          </div>
+
+          <!-- 厂商选择 -->
+          <div class="setting-group">
+            <label for="provider">AI 厂商</label>
+            <select id="provider" class="setting-select">
+              <option value="openai">OpenAI</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </div>
+
+          <!-- 模型选择 -->
+          <div class="setting-group">
+            <div class="model-select-row">
+              <label for="model">模型</label>
+              <button class="btn-link" id="toggleCustomModel">自定义模型…</button>
+            </div>
+            <select id="model" class="setting-select"></select>
+            <div id="customModelGroup" style="display:none;margin-top:8px;">
+              <input type="text" id="modelCustom" class="setting-input" placeholder="输入模型名称（如 gpt-4o-mini）">
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <div class="setting-label-row">
+              <label for="temperature">Temperature</label>
+              <span class="setting-value" id="tempValue">0.7</span>
+            </div>
+            <input type="range" id="temperature" class="setting-range" min="0" max="2" step="0.1" value="0.7">
+          </div>
+          <div class="setting-group">
+            <div class="setting-label-row">
+              <label for="maxTokens">Max Tokens</label>
+              <span class="setting-value" id="tokensValue">2000</span>
+            </div>
+            <input type="range" id="maxTokens" class="setting-range" min="100" max="4000" step="100" value="2000">
+          </div>
+        </div>
+
+        <!-- 应用设置 Tab -->
+        <div class="settings-tab-content" id="tab-app">
+          <div class="setting-section-title">主题</div>
+          <div class="setting-group">
+            <label>主题模式</label>
+            <div class="theme-selector">
+              <button class="theme-option active" data-theme="light">
+                <span class="theme-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </span>
+                <span>浅色</span>
+              </button>
+              <button class="theme-option" data-theme="dark">
+                <span class="theme-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </span>
+                <span>深色</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-section-title">数据管理</div>
+          <div class="setting-group">
+            <label>对话数据</label>
+            <div class="action-buttons">
+              <button class="btn-secondary setting-action-btn" id="exportData">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                导出对话
+              </button>
+              <button class="btn-secondary setting-action-btn" id="importData">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                导入对话
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-section-title">快捷指令</div>
+          <div class="setting-group">
+            <label>指令模板</label>
+            <div class="shortcut-list">
+              <div class="shortcut-item">
+                <span class="shortcut-name">代码助手</span>
+                <button class="btn-icon shortcut-edit" title="编辑">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-name">翻译助手</span>
+                <button class="btn-icon shortcut-edit" title="编辑">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="shortcut-item">
+                <span class="shortcut-name">文案润色</span>
+                <button class="btn-icon shortcut-edit" title="编辑">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <button class="btn-secondary setting-action-btn" id="addShortcut">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
-              <svg class="icon-eye-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
+              添加指令
             </button>
           </div>
         </div>
-        <div class="setting-group">
-          <label for="model">模型</label>
-          <select id="model" class="setting-select">
-            <option value="gpt-4o">GPT-4o</option>
-            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-            <option value="gpt-4">GPT-4</option>
-            <option value="gpt-3.5-turbo" selected>GPT-3.5 Turbo</option>
-          </select>
-        </div>
-        <div class="setting-group">
-          <div class="setting-label-row">
-            <label for="temperature">Temperature</label>
-            <span class="setting-value" id="tempValue">0.7</span>
+
+        <!-- 关于 Tab -->
+        <div class="settings-tab-content" id="tab-about">
+          <div class="about-section">
+            <div class="about-logo">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <h3 class="about-title">ChatBot</h3>
+            <p class="about-version">版本 1.0.0</p>
+            <p class="about-desc">基于大模型的智能对话系统</p>
           </div>
-          <input type="range" id="temperature" class="setting-range" min="0" max="2" step="0.1" value="0.7">
-        </div>
-        <div class="setting-group">
-          <div class="setting-label-row">
-            <label for="maxTokens">Max Tokens</label>
-            <span class="setting-value" id="tokensValue">2000</span>
+
+          <div class="about-section">
+            <div class="about-info-item">
+              <span class="about-info-label">当前用户</span>
+              <span class="about-info-value" id="aboutUserEmail">-</span>
+            </div>
+            <div class="about-info-item">
+              <span class="about-info-label">当前厂商</span>
+              <span class="about-info-value" id="aboutProvider">OpenAI</span>
+            </div>
+            <div class="about-info-item">
+              <span class="about-info-label">当前模型</span>
+              <span class="about-info-value" id="aboutModel">GPT-4o</span>
+            </div>
           </div>
-          <input type="range" id="maxTokens" class="setting-range" min="100" max="4000" step="100" value="2000">
+
+          <div class="about-section">
+            <p class="about-tech">技术栈</p>
+            <div class="about-tags">
+              <span class="about-tag">Vue 3</span>
+              <span class="about-tag">TypeScript</span>
+              <span class="about-tag">FastAPI</span>
+              <span class="about-tag">Supabase</span>
+            </div>
+          </div>
+
+          <div class="about-section">
+            <button class="btn-danger" id="clearAllData">清除所有数据</button>
+          </div>
         </div>
+
+        <!-- 保存按钮 -->
         <div class="setting-actions">
           <button class="btn-primary" id="saveSettings">保存设置</button>
         </div>
