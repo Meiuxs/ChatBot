@@ -6,13 +6,16 @@ from app.providers.base import AIProvider, ChatMessage
 
 logger = logging.getLogger(__name__)
 
+# 推理模型（o 系列）：不支持 temperature，必须用 reasoning_effort + max_completion_tokens
+_REASONING_MODELS = frozenset({"o1", "o3", "o3-mini", "o4-mini"})
+
 _client: httpx.AsyncClient | None = None
 
 
 def _get_client() -> httpx.AsyncClient:
     global _client
     if _client is None:
-        _client = httpx.AsyncClient(timeout=60.0)
+        _client = httpx.AsyncClient(timeout=120.0)
     return _client
 
 
@@ -26,6 +29,22 @@ class OpenAIProvider(AIProvider):
         reasoning_effort: str | None = None,
     ) -> AsyncIterable[str]:
         client = _get_client()
+
+        body: dict = {
+            "model": model,
+            "messages": [m.model_dump() for m in messages],
+            "stream": True,
+        }
+
+        # 推理模型参数适配：不支持 temperature，改用 reasoning_effort
+        if model in _REASONING_MODELS:
+            body["reasoning_effort"] = reasoning_effort or "medium"
+            if max_tokens:
+                body["max_completion_tokens"] = max_tokens
+        else:
+            body["temperature"] = temperature
+            body["max_tokens"] = max_tokens
+
         try:
             async with client.stream(
                 "POST",
@@ -34,20 +53,15 @@ class OpenAIProvider(AIProvider):
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json",
                 },
-                json={
-                    "model": model,
-                    "messages": [m.model_dump() for m in messages],
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                    "stream": True,
-                },
+                json=body,
             ) as response:
                 if response.status_code != 200:
-                    body = await response.aread()
+                    body_bytes = await response.aread()
                     logger.error(
-                        "OpenAI API error: %d %s", response.status_code, body.decode(errors="replace")
+                        "OpenAI API error: %d %s", response.status_code,
+                        body_bytes.decode(errors="replace")
                     )
-                    yield f"API 错误 ({response.status_code})，请检查 API Key"
+                    yield f"API 错误 ({response.status_code})，请检查 API Key 和模型名称"
                     return
 
                 async for line in response.aiter_lines():
@@ -56,9 +70,10 @@ class OpenAIProvider(AIProvider):
                         if data == "[DONE]":
                             return
                         chunk = json.loads(data)
-                        delta = chunk["choices"][0]["delta"].get("content", "")
-                        if delta:
-                            yield delta
+                        delta = chunk["choices"][0]["delta"]
+                        content = delta.get("content", "")
+                        if content:
+                            yield content
         except httpx.TimeoutException:
             logger.error("OpenAI API timeout")
             yield "请求超时，请稍后重试"

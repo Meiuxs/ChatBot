@@ -26,20 +26,64 @@ export interface ModelOption {
   label: string
 }
 
+/**
+ * 模型分类：
+ *  - chat     标准聊天模型（支持 temperature）
+ *  - reasoning 推理模型（使用 reasoning_effort 替代 temperature）
+ *  - latest   最新旗舰模型（GPT-5.x 系列,统一接口）
+ */
 export const MODELS_BY_PROVIDER: Record<string, ModelOption[]> = {
   openai: [
+    // --- GPT-5 系列（最新旗舰）---
+    { value: 'gpt-5.4', label: 'GPT-5.4（最新）' },
+    { value: 'gpt-5.3', label: 'GPT-5.3' },
+    { value: 'gpt-5.2', label: 'GPT-5.2' },
+    { value: 'gpt-5.1', label: 'GPT-5.1' },
+    { value: 'gpt-5', label: 'GPT-5' },
+    // --- GPT-4.1 系列 ---
+    { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
+    { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano' },
+    // --- GPT-4o 系列 ---
     { value: 'gpt-4o', label: 'GPT-4o' },
     { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-    { value: 'gpt-4', label: 'GPT-4' },
-    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
-    { value: 'o1-mini', label: 'o1 Mini' },
-    { value: 'o1-preview', label: 'o1 Preview' },
+    { value: 'chatgpt-4o-latest', label: 'ChatGPT-4o Latest' },
+    // --- O 系列（推理模型）---
+    { value: 'o4-mini', label: 'o4 Mini' },
+    { value: 'o3', label: 'o3' },
+    { value: 'o3-mini', label: 'o3 Mini' },
+    { value: 'o1', label: 'o1' },
   ],
   deepseek: [
     { value: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash' },
     { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro' },
   ],
+}
+
+/** 推理模型（使用 reasoning_effort 参数，不支持 temperature） */
+export const REASONING_MODELS = new Set([
+  'o1', 'o3', 'o3-mini', 'o4-mini',
+])
+
+/** 各模型的最大输出 token 上限 */
+export const MODEL_MAX_OUTPUT_TOKENS: Record<string, number> = {
+  'gpt-5.4': 128_000,
+  'gpt-5.3': 128_000,
+  'gpt-5.2': 128_000,
+  'gpt-5.1': 128_000,
+  'gpt-5': 128_000,
+  'gpt-4.1': 32_768,
+  'gpt-4.1-mini': 32_768,
+  'gpt-4.1-nano': 32_768,
+  'gpt-4o': 16_384,
+  'gpt-4o-mini': 16_384,
+  'chatgpt-4o-latest': 16_384,
+  'o4-mini': 100_000,
+  'o3': 100_000,
+  'o3-mini': 100_000,
+  'o1': 100_000,
+  'deepseek-v4-flash': 1_000_000,
+  'deepseek-v4-pro': 1_000_000,
 }
 
 export function getModelsForProvider(provider: string): ModelOption[] {
@@ -51,7 +95,6 @@ export function getProviderDisplayName(provider: string): string {
   return p?.label ?? provider
 }
 
-/** 获取某个模型所属的默认厂商 */
 export function getDefaultProviderForModel(model: string): string {
   for (const [provider, models] of Object.entries(MODELS_BY_PROVIDER)) {
     if (models.some((m) => m.value === model)) return provider
@@ -60,20 +103,6 @@ export function getDefaultProviderForModel(model: string): string {
   return 'openai'
 }
 
-/** 各模型的最大输出 token 上限 */
-export const MODEL_MAX_OUTPUT_TOKENS: Record<string, number> = {
-  'gpt-4o': 16384,
-  'gpt-4o-mini': 16384,
-  'gpt-4-turbo': 4096,
-  'gpt-4': 8192,
-  'gpt-3.5-turbo': 4096,
-  'o1-mini': 65536,
-  'o1-preview': 32768,
-  'deepseek-v4-flash': 1_000_000,
-  'deepseek-v4-pro': 1_000_000,
-}
-
-/** 获取模型的最大输出 token 上限，未知模型返回 1,000,000 */
 export function getModelMaxTokens(model: string): number {
   return MODEL_MAX_OUTPUT_TOKENS[model] ?? 1_000_000
 }
