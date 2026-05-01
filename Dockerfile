@@ -9,4 +9,4 @@ COPY backend/ .
 
 EXPOSE 8000
 
-CMD uvicorn test_app:app --host 0.0.0.0 --port $PORT
+CMD ["uvicorn", "test_app:app", "--host", "0.0.0.0", "--port", "8080"]
