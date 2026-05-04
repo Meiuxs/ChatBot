@@ -1,5 +1,8 @@
+import logging
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -21,4 +24,12 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    logger.info(
+        "CONFIG loaded supabase_url=%s has_jwt_secret=%s has_api_key_secret=%s cors_origins=%s",
+        settings.supabase_url,
+        "yes" if settings.supabase_jwt_secret else "no",
+        "yes" if settings.api_key_secret else "no",
+        settings.cors_origins,
+    )
+    return settings

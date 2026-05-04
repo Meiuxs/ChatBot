@@ -20,19 +20,17 @@ async def get_settings(
     user_settings: dict = Depends(get_user_settings),
 ):
     start = time.perf_counter()
+    user_id = current_user["id"]
+    logger.info("SETTINGS get user=%s", user_id)
     response = SettingsResponse(
         apiKey=user_settings.get("api_key", ""),
         model=user_settings.get("model", "gpt-4o"),
         provider=user_settings.get("provider", "openai"),
         temperature=user_settings.get("temperature", 0.7),
-        maxTokens=user_settings.get("max_tokens", 2000),
         theme=user_settings.get("theme", "light"),
     )
-    logger.info(
-        "METRIC settings_get user=%s total_ms=%.2f",
-        current_user["id"],
-        (time.perf_counter() - start) * 1000,
-    )
+    elapsed = (time.perf_counter() - start) * 1000
+    logger.info("SETTINGS get_done user=%s model=%s provider=%s elapsed_ms=%.0f", user_id, response.model, response.provider, elapsed)
     return response
 
 
@@ -43,13 +41,27 @@ async def update_settings(
     supabase: Client = Depends(get_supabase),
 ):
     start = time.perf_counter()
+    user_id = current_user["id"]
+    has_key = bool(request.apiKey)
+    changed = []
+    if request.model is not None:
+        changed.append(f"model={request.model}")
+    if request.provider is not None:
+        changed.append(f"provider={request.provider}")
+    if request.temperature is not None:
+        changed.append(f"temperature={request.temperature}")
+    if request.theme is not None:
+        changed.append(f"theme={request.theme}")
+    if has_key:
+        changed.append("api_key=***")
+    logger.info("SETTINGS update user=%s changes=[%s]", user_id, ", ".join(changed) if changed else "none")
+
     data = {
-        "user_id": current_user["id"],
+        "user_id": user_id,
         "api_key": encrypt_api_key(request.apiKey),
         "model": request.model,
         "provider": request.provider,
         "temperature": request.temperature,
-        "max_tokens": request.maxTokens,
         "theme": request.theme,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -60,11 +72,8 @@ async def update_settings(
     )
 
     # 立即失效缓存，避免更新后短时间读取到旧值
-    deps._settings_cache.pop(current_user["id"], None)
-    bump_user_data_version(current_user["id"])
-    logger.info(
-        "METRIC settings_update user=%s total_ms=%.2f",
-        current_user["id"],
-        (time.perf_counter() - start) * 1000,
-    )
+    deps._settings_cache.pop(user_id, None)
+    bump_user_data_version(user_id)
+    elapsed = (time.perf_counter() - start) * 1000
+    logger.info("SETTINGS update_done user=%s elapsed_ms=%.0f", user_id, elapsed)
     return {"success": True}

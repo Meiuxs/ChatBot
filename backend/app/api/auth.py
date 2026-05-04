@@ -1,4 +1,5 @@
 import logging
+import time
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.core.database import get_supabase
@@ -21,6 +22,16 @@ _AUTH_ERROR_MAP = {
     "user_not_found": (401, "邮箱或密码错误"),
     "invalid_credentials": (401, "邮箱或密码错误"),
 }
+
+
+def _mask_email(email: str) -> str:
+    """脱敏邮箱：test@example.com → tes***@example.com"""
+    if "@" not in email:
+        return email[:3] + "***"
+    local, domain = email.split("@", 1)
+    if len(local) <= 3:
+        return local[:1] + "***@" + domain
+    return local[:3] + "***@" + domain
 
 
 def _extract_error(e: Exception) -> str:
@@ -55,16 +66,28 @@ def _handle_auth_error(e: Exception, default_status: int, default_msg: str) -> H
     if "user not found" in msg or "user_not_found" in msg:
         return HTTPException(status_code=401, detail="邮箱或密码错误")
 
-    logger.error("Auth unexpected error (type=%s, msg=%s): %s", type(e).__name__, msg, e)
+    logger.exception("Auth unexpected error (type=%s, msg=%s)", type(e).__name__, msg)
     return HTTPException(status_code=default_status, detail=default_msg)
 
 
 @router.post("/register", response_model=AuthResponse)
-async def register(request: RegisterRequest, supabase: Client = Depends(get_supabase)):
+async def register(
+    request: RegisterRequest,
+    supabase: Client = Depends(get_supabase),
+):
+    email_masked = _mask_email(request.email)
+    logger.info("AUTH register attempt email=%s", email_masked)
+    start = time.perf_counter()
     try:
         result = supabase.auth.sign_up(
             {"email": request.email, "password": request.password}
         )
+        user_id = result.user.id
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.info(
+            "AUTH register success user=%s email=%s elapsed_ms=%.0f",
+            user_id, email_masked, elapsed,
+        )
         return AuthResponse(
             user={"id": result.user.id, "email": result.user.email},
             session={
@@ -73,14 +96,28 @@ async def register(request: RegisterRequest, supabase: Client = Depends(get_supa
             },
         )
     except Exception as e:
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.info("AUTH register failed email=%s elapsed_ms=%.0f exc=%s", email_masked, elapsed, type(e).__name__)
         raise _handle_auth_error(e, 400, "注册失败，请稍后重试")
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(request: LoginRequest, supabase: Client = Depends(get_supabase)):
+async def login(
+    request: LoginRequest,
+    supabase: Client = Depends(get_supabase),
+):
+    email_masked = _mask_email(request.email)
+    logger.info("AUTH login attempt email=%s", email_masked)
+    start = time.perf_counter()
     try:
         result = supabase.auth.sign_in_with_password(
             {"email": request.email, "password": request.password}
+        )
+        user_id = result.user.id
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.info(
+            "AUTH login success user=%s email=%s elapsed_ms=%.0f",
+            user_id, email_masked, elapsed,
         )
         return AuthResponse(
             user={"id": result.user.id, "email": result.user.email},
@@ -90,14 +127,18 @@ async def login(request: LoginRequest, supabase: Client = Depends(get_supabase))
             },
         )
     except Exception as e:
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.info("AUTH login failed email=%s elapsed_ms=%.0f exc=%s", email_masked, elapsed, type(e).__name__)
         raise _handle_auth_error(e, 401, "邮箱或密码错误")
 
 
 @router.post("/logout")
-async def logout():
+async def logout(current_user: dict = Depends(get_current_user)):
+    logger.info("AUTH logout user=%s", current_user.get("id", "?"))
     return {"success": True}
 
 
 @router.get("/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
+    logger.info("AUTH get_me user=%s email=%s", current_user.get("id", "?"), current_user.get("email", ""))
     return {"email": current_user.get("email", "")}
