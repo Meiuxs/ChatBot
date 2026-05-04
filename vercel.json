@@ -1,6 +1,8 @@
 {
+  "rootDirectory": "frontend",
   "framework": "vue",
   "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
