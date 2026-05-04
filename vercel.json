@@ -1,5 +1,4 @@
 {
-  "rootDirectory": "frontend",
   "framework": "vue",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
