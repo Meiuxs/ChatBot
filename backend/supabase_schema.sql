@@ -3,7 +3,8 @@
 -- 在 Supabase Dashboard → SQL Editor 中执行
 -- ============================================================
 
--- 数据迁移（已有表时添加新列）
+-- 数据迁移（已有表时添加新列或移除旧列）
+ALTER TABLE settings DROP COLUMN IF EXISTS max_tokens;
 ALTER TABLE settings ADD COLUMN IF NOT EXISTS provider TEXT DEFAULT 'openai';
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS reasoning TEXT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS model TEXT;
@@ -47,7 +48,6 @@ CREATE TABLE settings (
     provider TEXT DEFAULT 'openai',
     model TEXT DEFAULT 'gpt-4o',
     temperature FLOAT DEFAULT 0.7,
-    max_tokens INT DEFAULT 2000,
     theme TEXT DEFAULT 'light',
 
     -- 审计字段

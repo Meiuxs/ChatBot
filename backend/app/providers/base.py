@@ -19,7 +19,6 @@ class AIProvider:
         messages: list[ChatMessage],
         model: str,
         temperature: float,
-        max_tokens: int,
         reasoning_effort: str | None = None,
     ) -> AsyncIterable[str]:
         raise NotImplementedError

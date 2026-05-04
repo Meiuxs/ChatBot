@@ -1,11 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class ChatMessageSchema(BaseModel):
+    role: str = Field(..., pattern="^(user|assistant|system)$")
+    content: str = Field(..., min_length=1)
 
 
 class SendMessageRequest(BaseModel):
     sessionId: str
-    messages: list[dict]
+    messages: list[ChatMessageSchema]
     model: str
     provider: str = ""
     temperature: float = 0.7
-    maxTokens: int = 2000
     reasoningEffort: str | None = None
