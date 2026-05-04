@@ -1,31 +1,40 @@
+const STORAGE_WARNING_PREFIX = '[Storage]'
+
+function warn(key: string, error: unknown): void {
+  console.warn(`${STORAGE_WARNING_PREFIX} operation failed for key "${key}":`, error)
+}
+
 export const storage = {
   get<T>(key: string): T | null {
     try {
       const item = localStorage.getItem(key)
       return item ? (JSON.parse(item) as T) : null
-    } catch {
+    } catch (e) {
+      warn(key, e)
       return null
     }
   },
-  set<T>(key: string, value: T): void {
+  set<T>(key: string, value: T): boolean {
     try {
       localStorage.setItem(key, JSON.stringify(value))
-    } catch {
-      /* noop */
+      return true
+    } catch (e) {
+      warn(key, e)
+      return false
     }
   },
   remove(key: string): void {
     try {
       localStorage.removeItem(key)
-    } catch {
-      /* noop */
+    } catch (e) {
+      warn(key, e)
     }
   },
   clear(): void {
     try {
       localStorage.clear()
-    } catch {
-      /* noop */
+    } catch (e) {
+      warn('clear', e)
     }
   },
 }

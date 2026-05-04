@@ -5,6 +5,7 @@ export interface Message {
   role: MessageRole
   content: string
   reasoning?: string
+  error?: boolean
   createdAt: string
 }
 

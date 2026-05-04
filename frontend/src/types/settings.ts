@@ -3,7 +3,6 @@ export interface Settings {
   model: string
   provider: string
   temperature: number
-  maxTokens: number
   theme: 'light' | 'dark'
 }
 
@@ -12,7 +11,6 @@ export const DEFAULT_SETTINGS: Settings = {
   model: 'gpt-4o',
   provider: 'openai',
   temperature: 0.7,
-  maxTokens: 2000,
   theme: 'light',
 }
 
@@ -65,27 +63,6 @@ export const REASONING_MODELS = new Set([
   'o1', 'o3', 'o3-mini', 'o4-mini',
 ])
 
-/** 各模型的最大输出 token 上限 */
-export const MODEL_MAX_OUTPUT_TOKENS: Record<string, number> = {
-  'gpt-5.4': 128_000,
-  'gpt-5.3': 128_000,
-  'gpt-5.2': 128_000,
-  'gpt-5.1': 128_000,
-  'gpt-5': 128_000,
-  'gpt-4.1': 32_768,
-  'gpt-4.1-mini': 32_768,
-  'gpt-4.1-nano': 32_768,
-  'gpt-4o': 16_384,
-  'gpt-4o-mini': 16_384,
-  'chatgpt-4o-latest': 16_384,
-  'o4-mini': 100_000,
-  'o3': 100_000,
-  'o3-mini': 100_000,
-  'o1': 100_000,
-  'deepseek-v4-flash': 1_000_000,
-  'deepseek-v4-pro': 1_000_000,
-}
-
 export function getModelsForProvider(provider: string): ModelOption[] {
   return MODELS_BY_PROVIDER[provider] || []
 }
@@ -101,8 +78,4 @@ export function getDefaultProviderForModel(model: string): string {
   }
   if (model.startsWith('deepseek-')) return 'deepseek'
   return 'openai'
-}
-
-export function getModelMaxTokens(model: string): number {
-  return MODEL_MAX_OUTPUT_TOKENS[model] ?? 1_000_000
 }
