@@ -45,7 +45,7 @@ function onPageHide() {
   try {
     const raw = localStorage.getItem('chatbot_auth_token')
     const token = raw ? JSON.parse(raw) : null
-    fetch(`${API_BASE}/api/sessions/sync`, {
+    fetch(`${API_BASE}/api/v1/sessions/sync`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +77,11 @@ async function onVisibilityChange() {
       :open="sidebar.isOpen.value"
       @close="sidebar.close()"
     />
-    <main class="chat-main">
+    <main
+      class="chat-main"
+      @touchstart="sidebar.handleTouchStart"
+      @touchend="sidebar.handleTouchEnd"
+    >
       <ChatHeader
         @toggle-sidebar="sidebar.toggle()"
         @open-settings="openSettings"

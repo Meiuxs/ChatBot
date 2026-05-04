@@ -59,6 +59,7 @@ function saveSettings(): void {
   settingsStore.saveSettings()
   _snapshot = { ...settingsStore.settings }
   showToast('设置已保存', 'success')
+  close()
 }
 
 const showSaveButton = computed(() => activeTab.value === 'model')

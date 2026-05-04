@@ -18,6 +18,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   copyFailed: [message: string]
+  retry: []
 }>()
 
 const showToolbar = ref(false)
@@ -64,7 +65,7 @@ function onMessageBlur(event: FocusEvent) {
 
 const isUser = computed(() => props.message.role === 'user')
 const hasReasoning = computed(() => !isUser.value && !!props.message.reasoning)
-const isError = computed(() => props.message.role === 'assistant' && props.message.content.startsWith('抱歉，'))
+const isError = computed(() => props.message.error === true)
 
 function renderContent(content: string): string {
   return renderMarkdown(content)
@@ -129,6 +130,13 @@ async function renderMermaid() {
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
         <span>{{ message.content }}</span>
+        <button class="error-retry" title="重试" @click="emit('retry')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="23 4 23 10 17 10" />
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+          </svg>
+          重试
+        </button>
       </div>
     </div>
 
@@ -152,7 +160,9 @@ async function renderMermaid() {
           <span>思考过程</span>
           <span class="reasoning-badge">{{ message.reasoning?.length }} 字符</span>
         </button>
-        <div v-if="reasoningOpen" class="reasoning-content" v-html="renderContent(message.reasoning || '')" />
+        <Transition name="reasoning-slide">
+          <div v-if="reasoningOpen" class="reasoning-content">{{ message.reasoning }}</div>
+        </Transition>
       </div>
 
       <!-- Normal message content -->
@@ -186,14 +196,16 @@ async function renderMermaid() {
   align-self: flex-end;
   background: var(--text-primary);
   color: #ffffff;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .message.assistant {
   align-self: flex-start;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-bottom-left-radius: 4px;
+  border-bottom-left-radius: 2px;
+  box-shadow: var(--shadow-sm);
   color: var(--text-primary);
 }
 
@@ -242,7 +254,8 @@ async function renderMermaid() {
 
 /* Message content markdown styles */
 .message-content {
-  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .message-content :deep(p) {
@@ -273,7 +286,7 @@ async function renderMermaid() {
   margin: 14px 0;
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: #1e1e1e;
+  background: var(--code-bg, #1e1e1e);
 }
 
 .message-content :deep(pre code) {
@@ -466,6 +479,27 @@ async function renderMermaid() {
   opacity: 0.6;
 }
 
+/* Reasoning slide transition */
+.reasoning-slide-enter-active,
+.reasoning-slide-leave-active {
+  transition: opacity 0.3s ease, max-height 0.3s ease, margin-top 0.3s ease;
+  overflow: hidden;
+}
+
+.reasoning-slide-enter-from,
+.reasoning-slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+}
+
+.reasoning-slide-enter-to,
+.reasoning-slide-leave-from {
+  opacity: 1;
+  max-height: 500px;
+  margin-top: 8px;
+}
+
 .reasoning-badge {
   margin-left: auto;
   font-size: 11px;
@@ -481,14 +515,9 @@ async function renderMermaid() {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-secondary);
-}
-
-.reasoning-content :deep(p) {
-  margin-bottom: 8px;
-}
-
-.reasoning-content :deep(p:last-child) {
-  margin-bottom: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 @media (prefers-reduced-motion: reduce) {

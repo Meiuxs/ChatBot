@@ -91,6 +91,7 @@ function onInputKeydown(event: KeyboardEvent) {
         @keydown="onInputKeydown"
         @blur="saveEdit"
       >
+      <span class="session-item-count">{{ newTitle.length }}/100</span>
     </template>
     <span v-else class="session-item-title">{{ session.title }}</span>
 
@@ -160,6 +161,11 @@ function onInputKeydown(event: KeyboardEvent) {
 
 .session-item.active {
   background: var(--accent-light);
+}
+
+.session-item.active .session-item-edit,
+.session-item.active .session-item-delete {
+  opacity: 0.5;
 }
 
 .session-item.editing {
@@ -262,6 +268,12 @@ function onInputKeydown(event: KeyboardEvent) {
 .session-item-input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.session-item-count {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {

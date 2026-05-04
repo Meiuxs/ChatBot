@@ -38,7 +38,7 @@ function handleClearAllData(): void {
 function confirmClearAllData(): void {
   try {
     chatStore.clearChat()
-    settingsStore.updateSettings({ apiKey: '', provider: 'openai', model: 'gpt-4o', temperature: 0.7, maxTokens: 2000 })
+    settingsStore.updateSettings({ apiKey: '', provider: 'openai', model: 'gpt-4o', temperature: 0.7 })
     settingsStore.saveSettings()
     showToast('所有数据已清除')
   } catch (err: unknown) {

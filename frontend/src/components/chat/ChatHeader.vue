@@ -115,8 +115,10 @@ const apiConfigured = computed(() => {
     <h1
       v-else
       class="chat-title"
+      tabindex="0"
       :title="chatStore.currentSessionId ? '点击重命名' : undefined"
       @click="startEditTitle"
+      @keydown.enter="startEditTitle"
     >{{ chatStore.currentSession?.title || '新对话' }}</h1>
 
     <div class="api-status" :class="apiConfigured ? 'configured' : 'unconfigured'" :title="apiConfigured ? 'API Key 已配置' : 'API Key 未配置'">
@@ -186,6 +188,11 @@ const apiConfigured = computed(() => {
 
 .chat-title:hover {
   background: var(--bg-hover);
+}
+
+.chat-title:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .chat-title-input {

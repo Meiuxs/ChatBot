@@ -148,10 +148,17 @@ function handleStop() {
   justify-content: space-between;
   margin: 0 20px 8px;
   padding: 10px 14px;
+  font-size: 16px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   transition: border-color var(--transition), background var(--transition);
+}
+
+@media (max-width: 768px) {
+  .thinking-bar {
+    margin: 0 12px 8px;
+  }
 }
 
 .thinking-bar.active {
@@ -195,6 +202,11 @@ function handleStop() {
   background: var(--accent);
 }
 
+.thinking-switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .thinking-switch:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -231,7 +243,7 @@ function handleStop() {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 12px 16px;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--text-primary);
   resize: none;
   min-height: 48px;

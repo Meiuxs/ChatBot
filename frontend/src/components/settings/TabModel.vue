@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useSettingsStore } from '../../stores/settingsStore'
 import {
   PROVIDER_OPTIONS,
   getModelsForProvider,
   getProviderDisplayName,
-  getModelMaxTokens,
 } from '../../types/settings'
 import type { Settings } from '../../types/settings'
 
@@ -53,25 +52,7 @@ const temperature = computed({
   },
 })
 
-const maxTokens = computed({
-  get: () => settingsStore.settings.maxTokens,
-  set: (val: number) => {
-    settingsStore.updateSettings({ maxTokens: val } as Partial<Settings>)
-  },
-})
-
 const activeProviderName = computed(() => getProviderDisplayName(currentProvider.value))
-
-// 当前模型的最大 token 限制
-const modelMaxTokens = computed(() => getModelMaxTokens(currentModel.value))
-
-// 模型变化时，如果当前 maxTokens 超出限制则自动调低
-watch(currentModel, () => {
-  const limit = modelMaxTokens.value
-  if (settingsStore.settings.maxTokens > limit) {
-    settingsStore.updateSettings({ maxTokens: limit } as Partial<Settings>)
-  }
-})
 </script>
 
 <template>
@@ -166,7 +147,7 @@ watch(currentModel, () => {
   <!-- Temperature -->
   <div class="setting-group">
     <div class="setting-label-row">
-      <label for="temperature">Temperature</label>
+      <label for="temperature">温度</label>
       <span class="setting-value">{{ temperature.toFixed(1) }}</span>
     </div>
     <input
@@ -181,24 +162,7 @@ watch(currentModel, () => {
     />
   </div>
 
-  <!-- Max Tokens -->
-  <div class="setting-group">
-    <div class="setting-label-row">
-      <label for="maxTokens">Max Tokens</label>
-      <span class="setting-value">{{ maxTokens }}</span>
-    </div>
-    <input
-      id="maxTokens"
-      type="range"
-      class="setting-range"
-      min="100"
-      :max="modelMaxTokens"
-      step="100"
-      :value="maxTokens"
-      @input="maxTokens = parseInt(($event.target as HTMLInputElement).value, 10)"
-    />
-    <p class="api-key-hint">当前模型最大支持 {{ modelMaxTokens.toLocaleString() }} tokens</p>
-  </div>
+
 </template>
 
 <style scoped>
@@ -356,7 +320,19 @@ watch(currentModel, () => {
 }
 
 .setting-range::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
+}
+
+.setting-range::-webkit-slider-thumb:active {
+  transform: scale(1.25);
+}
+
+.setting-range::-moz-range-thumb:hover {
+  transform: scale(1.15);
+}
+
+.setting-range::-moz-range-thumb:active {
+  transform: scale(1.25);
 }
 
 .setting-range:focus-visible {

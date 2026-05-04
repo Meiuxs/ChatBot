@@ -106,7 +106,7 @@ async function handleRegister() {
         </svg>
       </div>
       <h1 class="auth-title">ChatBot</h1>
-      <p class="auth-subtitle">智能对话系统</p>
+      <p class="auth-subtitle">基于 OpenAI / DeepSeek 的智能助手</p>
 
       <!-- Login Form -->
       <form
