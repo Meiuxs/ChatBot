@@ -1,17 +1,29 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Session, Message } from '../types/chat'
-import { chatService } from '../services/chatService'
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
-}
+import { chatService, generateId } from '../services/chatService'
 
 export const useChatStore = defineStore('chat', () => {
   const sessions = ref<Session[]>([])
   const currentSessionId = ref<string | null>(null)
   const streaming = ref(false)
   const abortController = ref<AbortController | null>(null)
+  const dirtySessionIds = ref<Record<string, boolean>>({})
+
+  function markDirty(sessionId: string | null) {
+    if (!sessionId) return
+    dirtySessionIds.value = { ...dirtySessionIds.value, [sessionId]: true }
+  }
+
+  function markAllClean() {
+    dirtySessionIds.value = {}
+  }
+
+  function markAllDirty(sessionIds: string[]) {
+    const map: Record<string, boolean> = {}
+    sessionIds.forEach((id) => { map[id] = true })
+    dirtySessionIds.value = map
+  }
 
   const currentSession = computed(() => {
     return sessions.value.find((s) => s.id === currentSessionId.value) || null
@@ -39,6 +51,9 @@ export const useChatStore = defineStore('chat', () => {
     if (currentSessionId.value === id) {
       currentSessionId.value = sessions.value[0]?.id || null
     }
+    const next = { ...dirtySessionIds.value }
+    delete next[id]
+    dirtySessionIds.value = next
   }
 
   async function switchSession(id: string) {
@@ -56,14 +71,25 @@ export const useChatStore = defineStore('chat', () => {
   function removeLastPair() {
     const session = sessions.value.find((s) => s.id === currentSessionId.value)
     if (session && session.messages.length >= 2) {
-      session.messages.splice(session.messages.length - 2, 2)
+      session.messages = session.messages.slice(0, -2)
       session.updatedAt = new Date().toISOString()
+      markDirty(currentSessionId.value)
     }
   }
 
   async function persistSessions() {
-    await chatService.saveSessions(sessions.value)
+    const dirtyIds = dirtySessionIds.value
+    const dirtyIdList = Object.keys(dirtyIds).filter((id) => dirtyIds[id])
+    if (dirtyIdList.length === 0) return
+
+    const allSessions = sessions.value
+    const dirtySessions = allSessions.filter((s) => dirtyIdList.includes(s.id))
+    await chatService.saveSessions(dirtySessions, allSessions)
+
+    markAllClean()
   }
+
+  const AUTO_TITLE_MAX_LENGTH = 30
 
   function addMessage(role: Message['role'], content: string): Message {
     const msg: Message = {
@@ -74,12 +100,12 @@ export const useChatStore = defineStore('chat', () => {
     }
     const session = sessions.value.find((s) => s.id === currentSessionId.value)
     if (session) {
-      session.messages.push(msg)
+      session.messages = [...session.messages, msg]
       session.updatedAt = new Date().toISOString()
-      // Auto-title on first user message
       if (session.messages.length === 1 && role === 'user') {
-        session.title = content.slice(0, 30) + (content.length > 30 ? '...' : '')
+        session.title = content.slice(0, AUTO_TITLE_MAX_LENGTH) + (content.length > AUTO_TITLE_MAX_LENGTH ? '...' : '')
       }
+      markDirty(currentSessionId.value)
     }
     return msg
   }
@@ -87,18 +113,30 @@ export const useChatStore = defineStore('chat', () => {
   function updateMessage(messageId: string, content: string) {
     const session = sessions.value.find((s) => s.id === currentSessionId.value)
     if (session) {
-      const msg = session.messages.find((m) => m.id === messageId)
-      if (msg) msg.content = content
+      session.messages = session.messages.map((m) =>
+        m.id === messageId ? { ...m, content } : m
+      )
+      markDirty(currentSessionId.value)
+    }
+  }
+
+  function markMessageError(messageId: string, isError: boolean) {
+    const session = sessions.value.find((s) => s.id === currentSessionId.value)
+    if (session) {
+      session.messages = session.messages.map((m) =>
+        m.id === messageId ? { ...m, error: isError } : m
+      )
+      markDirty(currentSessionId.value)
     }
   }
 
   function updateMessageReasoning(messageId: string, reasoning: string) {
     const session = sessions.value.find((s) => s.id === currentSessionId.value)
     if (session) {
-      const msg = session.messages.find((m) => m.id === messageId)
-      if (msg) {
-        msg.reasoning = (msg.reasoning || '') + reasoning
-      }
+      session.messages = session.messages.map((m) =>
+        m.id === messageId ? { ...m, reasoning: (m.reasoning || '') + reasoning } : m
+      )
+      markDirty(currentSessionId.value)
     }
   }
 
@@ -129,12 +167,13 @@ export const useChatStore = defineStore('chat', () => {
   function clearChat() {
     sessions.value = []
     currentSessionId.value = null
-    persistSessions()
+    markAllClean()
   }
 
   function importSessions(newSessions: Session[]) {
     sessions.value = newSessions
     currentSessionId.value = newSessions[0]?.id || null
+    markAllDirty(newSessions.map((s) => s.id))
     persistSessions()
   }
 
@@ -142,6 +181,7 @@ export const useChatStore = defineStore('chat', () => {
     abortController.value?.abort()
     streaming.value = false
     abortController.value = null
+    markDirty(currentSessionId.value)
     persistSessions().catch(() => {})
   }
 
@@ -162,6 +202,7 @@ export const useChatStore = defineStore('chat', () => {
     importSessions,
     addMessage,
     updateMessage,
+    markMessageError,
     updateMessageReasoning,
     setStreaming,
     setAbortController,

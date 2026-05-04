@@ -4,9 +4,7 @@ import { apiClient, ApiError } from './apiClient'
 
 const USERS_KEY = 'chatbot_users'
 
-const DEFAULT_USERS: Record<string, string> = {
-  'admin@admin.com': 'admin',
-}
+const DEFAULT_USERS: Record<string, string> = {}
 
 interface SessionData {
   access_token: string
@@ -30,7 +28,7 @@ async function hashPassword(password: string): Promise<string> {
 export const authService = {
   async login(email: string, password: string): Promise<{ user: User; token?: string }> {
     try {
-      const res = await apiClient.post<AuthResponse>('/api/auth/login', { email, password })
+      const res = await apiClient.post<AuthResponse>('/api/v1/auth/login', { email, password })
       const token = res.session?.access_token
       if (token) {
         storage.set(STORAGE_KEYS.authToken, token)
@@ -71,7 +69,7 @@ export const authService = {
 
   async register(email: string, password: string): Promise<{ user: User; token?: string }> {
     try {
-      const res = await apiClient.post<AuthResponse>('/api/auth/register', { email, password })
+      const res = await apiClient.post<AuthResponse>('/api/v1/auth/register', { email, password })
       const token = res.session?.access_token
       if (token) {
         storage.set(STORAGE_KEYS.authToken, token)
@@ -110,7 +108,7 @@ export const authService = {
 
   async logout(): Promise<void> {
     try {
-      await apiClient.post('/api/auth/logout')
+      await apiClient.post('/api/v1/auth/logout')
     } catch {
       // Fallback: proceed with local logout
     }
@@ -129,7 +127,7 @@ export const authService = {
     }
 
     try {
-      const res = await apiClient.get<{ email: string }>('/api/auth/me')
+      const res = await apiClient.get<{ email: string }>('/api/v1/auth/me')
       return { email: res.email }
     } catch {
       // Fallback: localStorage

@@ -33,14 +33,13 @@ export function useChat() {
         .map((m) => ({ role: m.role, content: m.content }))
 
       await apiClient.postStream(
-        '/api/chat/stream',
+        '/api/v1/chat/stream',
         {
           sessionId: chatStore.currentSessionId,
           messages: conversationMessages,
           model: settingsStore.settings.model,
           provider: settingsStore.settings.provider,
           temperature: settingsStore.settings.temperature,
-          maxTokens: settingsStore.settings.maxTokens,
           reasoningEffort: thinkingEnabled ? 'high' : null,
         },
         (delta) => {
@@ -56,9 +55,9 @@ export function useChat() {
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') return
 
-      const mockResponse =
-        `这是 AI 的模拟回复。\n\n你说了: "${content.trim()}"\n\n> 后端服务未连接，请在设置中配置后端地址以获取真实回复。`
-      chatStore.updateMessage(assistantMsg.id, mockResponse)
+      const errorMsg = err instanceof Error ? err.message : '发送失败，请稍后重试'
+      chatStore.updateMessage(assistantMsg.id, errorMsg)
+      chatStore.markMessageError(assistantMsg.id, true)
     } finally {
       sending.value = false
       chatStore.setStreaming(false)

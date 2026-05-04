@@ -31,7 +31,7 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   function updateSettings(partial: Partial<Settings>) {
-    Object.assign(settings.value, partial)
+    settings.value = { ...settings.value, ...partial }
   }
 
   function applyTheme(theme: 'light' | 'dark') {

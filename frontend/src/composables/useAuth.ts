@@ -7,17 +7,17 @@ export function useAuth() {
 
   async function login(email: string, password: string) {
     await store.login(email, password)
-    router.push('/chat')
+    await router.push('/chat').catch(() => {})
   }
 
   async function register(email: string, password: string) {
     await store.register(email, password)
-    router.push('/chat')
+    await router.push('/chat').catch(() => {})
   }
 
   async function logout() {
     await store.logout()
-    router.push('/login')
+    await router.push('/login').catch(() => {})
   }
 
   return {
