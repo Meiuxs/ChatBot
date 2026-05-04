@@ -260,6 +260,11 @@ watch(currentModel, () => {
   box-shadow: 0 0 0 3px var(--accent-light);
 }
 
+.setting-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .setting-input::placeholder {
   color: var(--text-tertiary);
 }
@@ -295,6 +300,11 @@ watch(currentModel, () => {
   color: var(--text-secondary);
 }
 
+.btn-toggle-visibility:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .setting-select {
   width: 100%;
   background: var(--bg-surface);
@@ -317,6 +327,11 @@ watch(currentModel, () => {
 .setting-select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.setting-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .setting-range {
@@ -342,6 +357,11 @@ watch(currentModel, () => {
 
 .setting-range::-webkit-slider-thumb:hover {
   transform: scale(1.1);
+}
+
+.setting-range:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .setting-range::-moz-range-thumb {

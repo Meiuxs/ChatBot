@@ -165,6 +165,11 @@ function handleOverlayClick() {
   color: var(--text-primary);
 }
 
+.btn-icon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .btn-icon:active {
   background: var(--border);
 }

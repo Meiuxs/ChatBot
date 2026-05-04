@@ -258,6 +258,11 @@ const apiConfigured = computed(() => {
   color: var(--text-primary);
 }
 
+.btn-icon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .btn-icon:active {
   background: var(--border);
 }
@@ -282,6 +287,11 @@ const apiConfigured = computed(() => {
 .user-avatar:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.user-avatar:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .user-dropdown {
@@ -343,6 +353,12 @@ const apiConfigured = computed(() => {
 .user-dropdown-item:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.user-dropdown-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: var(--bg-hover);
 }
 
 .user-dropdown-item svg {

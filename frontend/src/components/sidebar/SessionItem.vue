@@ -153,6 +153,11 @@ function onInputKeydown(event: KeyboardEvent) {
   background: var(--bg-hover);
 }
 
+.session-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .session-item.active {
   background: var(--accent-light);
 }
@@ -226,6 +231,12 @@ function onInputKeydown(event: KeyboardEvent) {
   color: var(--accent);
 }
 
+.session-item-edit:focus-visible,
+.session-item-delete:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .session-item-delete {
   width: 24px;
   height: 24px;
@@ -246,6 +257,11 @@ function onInputKeydown(event: KeyboardEvent) {
 .session-item-delete:hover {
   background: var(--danger-light);
   color: var(--danger);
+}
+
+.session-item-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {

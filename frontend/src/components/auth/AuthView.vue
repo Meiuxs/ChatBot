@@ -306,6 +306,11 @@ async function handleRegister() {
   box-shadow: 0 0 0 3px var(--accent-light);
 }
 
+.auth-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .input-with-action {
   position: relative;
   display: flex;
@@ -332,6 +337,11 @@ async function handleRegister() {
 
 .btn-toggle-visibility:hover {
   color: var(--text-secondary);
+}
+
+.btn-toggle-visibility:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .auth-error {
@@ -361,6 +371,11 @@ async function handleRegister() {
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .btn-primary:disabled {
@@ -400,6 +415,11 @@ async function handleRegister() {
 
 .auth-switch-btn:hover {
   color: var(--accent-hover);
+}
+
+.auth-switch-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 @keyframes authSlideIn {

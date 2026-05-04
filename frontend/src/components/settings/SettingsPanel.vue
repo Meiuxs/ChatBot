@@ -236,6 +236,11 @@ onUnmounted(() => {
   color: var(--text-primary);
 }
 
+.settings-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* Tabs */
 .settings-tabs {
   display: flex;
@@ -261,6 +266,11 @@ onUnmounted(() => {
 
 .settings-tab:hover {
   color: var(--text-primary);
+}
+
+.settings-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .settings-tab:active {
@@ -319,6 +329,11 @@ onUnmounted(() => {
 .btn-primary:hover {
   background: var(--accent-hover);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .btn-primary:active {

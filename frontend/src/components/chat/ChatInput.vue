@@ -246,6 +246,11 @@ function handleStop() {
   box-shadow: 0 0 0 3px var(--accent-light);
 }
 
+.chat-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .chat-input::placeholder {
   color: var(--text-tertiary);
 }
@@ -280,6 +285,11 @@ function handleStop() {
   border-color: var(--border-strong);
 }
 
+.btn-stop:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* Send button */
 .btn-send {
   width: 48px;
@@ -296,6 +306,11 @@ function handleStop() {
 
 .btn-send:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+
+.btn-send:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .btn-send:active:not(:disabled) {

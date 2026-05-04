@@ -9,8 +9,15 @@ mermaid.initialize({
   theme: 'neutral',
 })
 
+const COPY_FALLBACK_FAILED = '复制失败'
+
 const props = defineProps<{
   message: Message
+  isStreaming?: boolean
+}>()
+
+const emit = defineEmits<{
+  copyFailed: [message: string]
 }>()
 
 const showToolbar = ref(false)
@@ -24,40 +31,80 @@ onMounted(() => {
 
 function handleCopy() {
   const content = props.message.content
-  navigator.clipboard.writeText(content).catch(() => {})
+  navigator.clipboard.writeText(content).catch(() => {
+    // Fallback for insecure contexts or older browsers
+    const textarea = document.createElement('textarea')
+    textarea.value = content
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+    } catch {
+      emit('copyFailed', COPY_FALLBACK_FAILED)
+    } finally {
+      document.body.removeChild(textarea)
+    }
+  })
 }
 
 function toggleReasoning() {
   reasoningOpen.value = !reasoningOpen.value
 }
 
+function onMessageBlur(event: FocusEvent) {
+  const related = event.relatedTarget as HTMLElement | null
+  const target = event.currentTarget as HTMLElement
+  if (related && target.contains(related)) {
+    return
+  }
+  showToolbar.value = false
+}
+
 const isUser = computed(() => props.message.role === 'user')
 const hasReasoning = computed(() => !isUser.value && !!props.message.reasoning)
+const isError = computed(() => props.message.role === 'assistant' && props.message.content.startsWith('抱歉，'))
 
 function renderContent(content: string): string {
   return renderMarkdown(content)
 }
 
-// 首次收到思考内容时自动展开，后续追加不重复展开（避免用户折叠后又被弹开）
+// 首次收到思考内容时自动展开
 watch(() => props.message.reasoning, (val, oldVal) => {
   if (val && !oldVal) {
     reasoningOpen.value = true
   }
 })
-watch(() => props.message.content, async () => {
-  if (isUser.value) return
-  await nextTick()
-  if (contentRef.value) {
-    const elements = contentRef.value.querySelectorAll('.mermaid')
-    if (elements.length > 0) {
-      try {
-        await mermaid.run({ nodes: Array.from(elements) as HTMLElement[] })
-      } catch {
-        // mermaid 渲染失败时静默处理
-      }
-    }
+
+// 仅在流式结束后渲染 Mermaid 图表（避免流式期间每 delta 触发 mermaid.run）
+watch(() => props.isStreaming, async (streaming, wasStreaming) => {
+  if (wasStreaming && !streaming) {
+    await nextTick()
+    await renderMermaid()
+  }
+}, { immediate: false })
+
+// 非流式消息（如历史消息加载）也需渲染 Mermaid
+watch(() => props.message.content, async (content, oldContent) => {
+  if (isUser.value || props.isStreaming) return
+  // 非流式场景：内容变化时渲染 Mermaid
+  if (content !== oldContent) {
+    await nextTick()
+    await renderMermaid()
   }
 }, { immediate: true })
+
+async function renderMermaid() {
+  if (!contentRef.value) return
+  const elements = contentRef.value.querySelectorAll('.mermaid:not([data-processed])')
+  if (elements.length === 0) return
+  try {
+    await mermaid.run({ nodes: Array.from(elements) as HTMLElement[] })
+  } catch {
+    // mermaid 语法错误时静默处理，保留原始代码文本
+  }
+}
 </script>
 
 <template>
@@ -67,11 +114,14 @@ watch(() => props.message.content, async () => {
       user: isUser,
       assistant: message.role === 'assistant',
     }"
+    tabindex="0"
     @mouseenter="showToolbar = true"
     @mouseleave="showToolbar = false"
+    @focus="showToolbar = true"
+    @blur="onMessageBlur"
   >
     <!-- Error message -->
-    <div v-if="message.content.startsWith('抱歉，')" class="message-content">
+    <div v-if="isError" class="message-content">
       <div class="error-text">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="10" />
@@ -110,7 +160,7 @@ watch(() => props.message.content, async () => {
     </template>
 
     <!-- Toolbar -->
-    <div v-if="showToolbar || isTouchDevice" class="message-toolbar">
+    <div v-show="showToolbar || isTouchDevice" class="message-toolbar">
       <button class="toolbar-btn" title="复制内容" @click="handleCopy">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -320,7 +370,16 @@ watch(() => props.message.content, async () => {
   top: -10px;
   display: flex;
   gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition);
+}
+
+.message:hover .message-toolbar,
+.message:focus-within .message-toolbar,
+.message-toolbar.show-toolbar {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .message.user .message-toolbar {
@@ -349,6 +408,11 @@ watch(() => props.message.content, async () => {
 .toolbar-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.toolbar-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
@@ -381,6 +445,11 @@ watch(() => props.message.content, async () => {
 .reasoning-toggle:hover {
   background: var(--bg-hover);
   color: var(--text-secondary);
+}
+
+.reasoning-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .reasoning-chevron {

@@ -306,6 +306,11 @@ function addShortcut(): void {
   border-color: var(--border-strong);
 }
 
+.theme-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .theme-option.active {
   border-color: var(--accent);
   background: var(--accent-light);
@@ -356,6 +361,11 @@ function addShortcut(): void {
   background: var(--bg-hover);
 }
 
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .btn-secondary:active {
   background: var(--border);
 }
@@ -404,5 +414,11 @@ function addShortcut(): void {
 .shortcut-edit:hover {
   opacity: 1;
   background: var(--bg-hover);
+}
+
+.shortcut-edit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  opacity: 1;
 }
 </style>
