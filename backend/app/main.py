@@ -127,7 +127,7 @@ async def rate_limit_and_timing_middleware(request: Request, call_next):
     # 记录详细请求日志
     client_ip = _get_client_ip(request)
     ua = request.headers.get("User-Agent", "")[:80]
-    qs = str(request.url.query_string, "utf-8") if request.url.query_string else ""
+    qs = request.url.query or ""
     logger.info(
         "REQ [%s] %s %s → %d (%.2fs) ip=%s ua=%s qs=%s",
         request_id, request.method, request.url.path,
