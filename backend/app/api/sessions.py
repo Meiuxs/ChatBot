@@ -204,6 +204,16 @@ async def sync_sessions(
     return {"success": True}
 
 
+@router.put("/sync")
+async def sync_sessions_put_fallback(current_user: dict = Depends(get_current_user)):
+    """旧版前端可能发送 PUT 而非 POST，返回 405 提示客户端修正。"""
+    logger.warning("SESSIONS sync_via_put user=%s — 客户端应使用 POST", current_user["id"])
+    raise HTTPException(
+        status_code=405,
+        detail="请使用 POST 方法同步会话（PUT /sync 已废弃）",
+    )
+
+
 @router.delete("/{session_id}")
 async def delete_session(
     session_id: str,

@@ -111,11 +111,12 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.middleware("http")
 async def rate_limit_and_timing_middleware(request: Request, call_next):
-    # 速率限制检查
-    try:
-        _check_rate_limit(request)
-    except HTTPException:
-        raise
+    # 速率限制检查（跳过 OPTIONS 预检请求，确保 CORS 响应头正常返回）
+    if request.method != "OPTIONS":
+        try:
+            _check_rate_limit(request)
+        except HTTPException:
+            raise
 
     # 生成请求追踪 ID 并注入 request.state
     # 优先使用前端传递的 trace_id，实现前后端关联
