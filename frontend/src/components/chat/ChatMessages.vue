@@ -226,6 +226,7 @@ const shouldShowLoading = computed(() => {
 
 /* Virtual scroll optimization - defer off-screen rendering */
 .message-wrapper {
+  display: flex;
   content-visibility: auto;
   contain-intrinsic-size: auto 200px;
   contain: layout style;
