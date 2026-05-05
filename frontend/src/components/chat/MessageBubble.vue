@@ -178,6 +178,7 @@ async function renderMermaid() {
         </svg>
       </button>
     </div>
+    <div class="toolbar-spacer" />
   </div>
 </template>
 
@@ -189,7 +190,8 @@ async function renderMermaid() {
   border-radius: var(--radius-lg);
   font-size: 15px;
   line-height: 1.6;
-  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .message.user {
@@ -379,13 +381,16 @@ async function renderMermaid() {
 
 /* Toolbar */
 .message-toolbar {
-  position: absolute;
-  top: -10px;
   display: flex;
   gap: 4px;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition);
+  margin-top: 4px;
+}
+
+.toolbar-spacer {
+  display: none;
 }
 
 .message:hover .message-toolbar,
@@ -396,11 +401,7 @@ async function renderMermaid() {
 }
 
 .message.user .message-toolbar {
-  right: 12px;
-}
-
-.message.assistant .message-toolbar {
-  left: 12px;
+  justify-content: flex-end;
 }
 
 .toolbar-btn {
