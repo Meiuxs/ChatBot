@@ -70,6 +70,37 @@ const shouldShowLoading = computed(() => {
   return lastMsg.role === 'assistant' && lastMsg.content === '' && !lastMsg.reasoning
 })
 
+function getDateLabel(dateStr: string): string {
+  const d = new Date(dateStr)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  if (target.getTime() === today.getTime()) return '今天'
+  if (target.getTime() === yesterday.getTime()) return '昨天'
+  return `${d.getMonth() + 1}月${d.getDate()}日`
+}
+
+interface DateSeparator { type: 'separator'; label: string }
+type DisplayItem = typeof chatStore.currentMessages[number] | DateSeparator
+
+const displayItems = computed<DisplayItem[]>(() => {
+  const msgs = chatStore.currentMessages
+  if (msgs.length === 0) return []
+  const result: DisplayItem[] = []
+  let lastLabel = ''
+  for (const msg of msgs) {
+    const label = getDateLabel(msg.createdAt)
+    if (label !== lastLabel) {
+      result.push({ type: 'separator', label })
+      lastLabel = label
+    }
+    result.push(msg)
+  }
+  return result
+})
+
 </script>
 
 <template>
@@ -104,9 +135,14 @@ const shouldShowLoading = computed(() => {
     </div>
 
     <!-- Message list -->
-    <template v-for="message in chatStore.currentMessages" :key="message.id">
-      <div class="message-wrapper">
-        <MessageBubble :message="message" :is-streaming="chatStore.streaming" @retry="handleRetry(message.id)" />
+    <template v-for="item in displayItems" :key="(item as any).type === 'separator' ? 'sep-' + (item as DateSeparator).label : (item as any).id">
+      <div v-if="(item as DateSeparator).type === 'separator'" class="date-separator">
+        <span class="date-separator-line" />
+        <span class="date-separator-label">{{ (item as DateSeparator).label }}</span>
+        <span class="date-separator-line" />
+      </div>
+      <div v-else class="message-wrapper">
+        <MessageBubble :message="item as typeof chatStore.currentMessages[number]" :is-streaming="chatStore.streaming" @retry="handleRetry((item as typeof chatStore.currentMessages[number]).id)" />
       </div>
     </template>
 
@@ -128,7 +164,7 @@ const shouldShowLoading = computed(() => {
 }
 
 .chat-messages::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .chat-messages::-webkit-scrollbar-track {
@@ -149,6 +185,34 @@ const shouldShowLoading = computed(() => {
   justify-content: center;
   padding: 40px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-state::before {
+  content: '';
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-light) 0%, transparent 70%);
+  opacity: 0.4;
+  top: -120px;
+  right: -160px;
+  pointer-events: none;
+}
+
+.empty-state::after {
+  content: '';
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-light) 0%, transparent 70%);
+  opacity: 0.25;
+  bottom: -80px;
+  left: -120px;
+  pointer-events: none;
 }
 
 .empty-state-icon {
@@ -156,6 +220,7 @@ const shouldShowLoading = computed(() => {
   height: 48px;
   color: var(--text-tertiary);
   margin-bottom: 20px;
+  position: relative;
 }
 
 .empty-state-title {
@@ -230,6 +295,29 @@ const shouldShowLoading = computed(() => {
   content-visibility: auto;
   contain-intrinsic-size: auto 200px;
   contain: layout style;
+}
+
+/* Date separator */
+.date-separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+  user-select: none;
+}
+
+.date-separator-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.date-separator-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
 }
 
 /* Loading message placeholder */

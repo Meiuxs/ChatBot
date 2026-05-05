@@ -11,12 +11,6 @@ const { theme, toggleTheme } = useTheme()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
-const shortcuts = ref([
-  { name: '代码助手', prompt: '你是一个编程助手' },
-  { name: '翻译助手', prompt: '你是一个翻译助手' },
-  { name: '文案润色', prompt: '请润色以下文案' },
-])
-
 function setTheme(newTheme: 'light' | 'dark'): void {
   if (theme !== newTheme) {
     toggleTheme()
@@ -85,12 +79,69 @@ function handleFileChange(event: Event): void {
   reader.readAsText(file)
 }
 
+const shortcuts = ref<{ name: string; prompt: string }[]>((() => {
+  try {
+    const saved = localStorage.getItem('chatbot_shortcuts')
+    return saved ? JSON.parse(saved) : [
+      { name: '代码助手', prompt: '你是一个编程助手' },
+      { name: '翻译助手', prompt: '你是一个翻译助手' },
+      { name: '文案润色', prompt: '请润色以下文案' },
+    ]
+  } catch {
+    return [
+      { name: '代码助手', prompt: '你是一个编程助手' },
+      { name: '翻译助手', prompt: '你是一个翻译助手' },
+      { name: '文案润色', prompt: '请润色以下文案' },
+    ]
+  }
+})())
+
+function saveShortcuts() {
+  localStorage.setItem('chatbot_shortcuts', JSON.stringify(shortcuts.value))
+}
+
+const editingShortcutIndex = ref<number | null>(null)
+const editingShortcutName = ref('')
+const editingShortcutPrompt = ref('')
+
 function editShortcut(index: number): void {
-  showToast('编辑指令: ' + shortcuts.value[index].name)
+  editingShortcutIndex.value = index
+  editingShortcutName.value = shortcuts.value[index].name
+  editingShortcutPrompt.value = shortcuts.value[index].prompt
+}
+
+function saveEditShortcut(): void {
+  if (editingShortcutIndex.value === null) return
+  const name = editingShortcutName.value.trim()
+  const prompt = editingShortcutPrompt.value.trim()
+  if (!name || !prompt) return
+  shortcuts.value[editingShortcutIndex.value] = { name, prompt }
+  editingShortcutIndex.value = null
+  saveShortcuts()
+  showToast('快捷指令已更新')
+}
+
+function cancelEditShortcut(): void {
+  editingShortcutIndex.value = null
+}
+
+function deleteShortcut(index: number): void {
+  shortcuts.value.splice(index, 1)
+  editingShortcutIndex.value = null
+  saveShortcuts()
+  showToast('快捷指令已删除')
 }
 
 function addShortcut(): void {
-  showToast('添加指令功能开发中')
+  shortcuts.value.push({ name: '新指令', prompt: '请输入提示词' })
+  editingShortcutIndex.value = shortcuts.value.length - 1
+  editingShortcutName.value = '新指令'
+  editingShortcutPrompt.value = '请输入提示词'
+}
+
+function handleEditKeydown(e: KeyboardEvent): void {
+  if (e.key === 'Enter') { e.preventDefault(); saveEditShortcut() }
+  if (e.key === 'Escape') { e.preventDefault(); cancelEditShortcut() }
 }
 </script>
 
@@ -211,25 +262,57 @@ function addShortcut(): void {
         v-for="(shortcut, index) in shortcuts"
         :key="index"
         class="shortcut-item"
+        :class="{ editing: editingShortcutIndex === index }"
       >
-        <span class="shortcut-name">{{ shortcut.name }}</span>
-        <button
-          class="btn-icon shortcut-edit"
-          title="编辑"
-          @click="editShortcut(index)"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
+        <template v-if="editingShortcutIndex === index">
+          <div class="shortcut-edit-fields">
+            <input
+              v-model="editingShortcutName"
+              class="shortcut-input"
+              placeholder="指令名称"
+              maxlength="20"
+              @keydown="handleEditKeydown"
+            >
+            <input
+              v-model="editingShortcutPrompt"
+              class="shortcut-input"
+              placeholder="提示词内容"
+              maxlength="200"
+              @keydown="handleEditKeydown"
+            >
+          </div>
+          <div class="shortcut-edit-actions">
+            <button class="shortcut-action-btn save" title="保存" @click="saveEditShortcut">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+            </button>
+            <button class="shortcut-action-btn cancel" title="取消" @click="cancelEditShortcut">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+            <button class="shortcut-action-btn del" title="删除" @click="deleteShortcut(index)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            </button>
+          </div>
+        </template>
+        <template v-else>
+          <span class="shortcut-name">{{ shortcut.name }}</span>
+          <button
+            class="btn-icon shortcut-edit"
+            title="编辑"
+            @click="editShortcut(index)"
           >
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
-        </button>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+        </template>
       </div>
     </div>
     <button
@@ -389,11 +472,86 @@ function addShortcut(): void {
   padding: 10px 12px;
   background: var(--bg-base);
   border-radius: var(--radius-sm);
+  gap: 8px;
+}
+
+.shortcut-item.editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  background: var(--bg-hover);
 }
 
 .shortcut-name {
   font-size: 14px;
   color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortcut-edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcut-input {
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition);
+}
+
+.shortcut-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.shortcut-edit-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.shortcut-action-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.shortcut-action-btn.save:hover {
+  background: var(--success-light);
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.shortcut-action-btn.cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.shortcut-action-btn.del:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+  border-color: var(--danger-border);
+}
+
+.shortcut-action-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .shortcut-edit {

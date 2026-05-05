@@ -330,9 +330,10 @@ function handleStop() {
 }
 
 .btn-send:disabled {
-  background: var(--bg-hover);
+  background: var(--bg-elevated);
   color: var(--text-tertiary);
   cursor: not-allowed;
+  opacity: 0.45;
 }
 
 @media (prefers-reduced-motion: reduce) {

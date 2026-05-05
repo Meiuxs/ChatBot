@@ -1,16 +1,16 @@
 :root {
-  --bg-base: #fafafa;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f5f5f5;
-  --bg-hover: #f0f0f0;
-  --text-primary: #1a1a1a;
-  --text-secondary: #666666;
-  --text-tertiary: #6b6b6b;
+  --bg-base: oklch(98% 0.003 70);
+  --bg-surface: oklch(100% 0 0);
+  --bg-elevated: oklch(96% 0.005 70);
+  --bg-hover: oklch(94% 0.007 70);
+  --text-primary: oklch(13% 0.005 70);
+  --text-secondary: oklch(42% 0.008 70);
+  --text-tertiary: oklch(46% 0.008 70);
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-light: #dbeafe;
-  --border: #e5e5e5;
-  --border-strong: #d4d4d4;
+  --border: oklch(90% 0.004 70);
+  --border-strong: oklch(84% 0.005 70);
   --danger: #dc2626;
   --danger-hover: #b91c1c;
   --danger-light: #fef2f2;
@@ -22,28 +22,28 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --code-bg: #1e1e1e;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --code-bg: oklch(18% 0.005 250);
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.04);
+  --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.08);
+  --shadow-lg: 0 8px 30px oklch(0% 0 0 / 0.12);
   --transition: 150ms ease;
   --sidebar-width: 260px;
   --header-height: 56px;
 }
 
 .dark {
-  --bg-base: #1a1a1a;
-  --bg-surface: #252525;
-  --bg-elevated: #2a2a2a;
-  --bg-hover: #333333;
-  --text-primary: #e5e5e5;
-  --text-secondary: #999999;
-  --text-tertiary: #a0a0a0;
+  --bg-base: oklch(18% 0.004 250);
+  --bg-surface: oklch(22% 0.005 250);
+  --bg-elevated: oklch(25% 0.006 250);
+  --bg-hover: oklch(29% 0.007 250);
+  --text-primary: oklch(92% 0.003 250);
+  --text-secondary: oklch(65% 0.005 250);
+  --text-tertiary: oklch(68% 0.005 250);
   --accent: #3b82f6;
   --accent-hover: #60a5fa;
   --accent-light: #1e3a5f;
-  --border: #333333;
-  --border-strong: #444444;
+  --border: oklch(29% 0.007 250);
+  --border-strong: oklch(37% 0.008 250);
   --danger: #ef4444;
   --danger-hover: #f87171;
   --danger-light: #3b1010;
@@ -52,7 +52,7 @@
   --success-light: #052e16;
   --warn: #fbbf24;
   --warn-light: #422006;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.3);
+  --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.4);
+  --shadow-lg: 0 8px 30px oklch(0% 0 0 / 0.5);
 }

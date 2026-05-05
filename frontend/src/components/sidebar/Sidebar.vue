@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useChatStore } from '../../stores/chatStore'
 import SessionItem from './SessionItem.vue'
 
@@ -11,6 +12,13 @@ const emit = defineEmits<{
 }>()
 
 const chatStore = useChatStore()
+const searchQuery = ref('')
+
+const filteredSessions = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return chatStore.sessions
+  return chatStore.sessions.filter(s => s.title.toLowerCase().includes(q))
+})
 
 function handleNewChat() {
   chatStore.createSession()
@@ -58,15 +66,35 @@ function handleOverlayClick() {
         </button>
       </div>
 
+      <div class="sidebar-search">
+        <svg class="sidebar-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          v-model="searchQuery"
+          class="sidebar-search-input"
+          placeholder="搜索会话..."
+          type="text"
+        >
+      </div>
+
       <div class="session-list">
-        <div v-if="chatStore.sessions.length === 0" class="session-list-empty">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <div v-if="filteredSessions.length === 0" class="session-list-empty">
+          <svg v-if="searchQuery" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <svg v-else width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <p>暂无会话</p>
         </div>
+        <div v-if="filteredSessions.length === 0 && searchQuery.trim()" class="session-list-empty">
+          <p>未找到匹配的会话</p>
+        </div>
         <SessionItem
-          v-for="session in chatStore.sessions"
+          v-for="session in filteredSessions"
           :key="session.id"
           :session="session"
           :active="session.id === chatStore.currentSessionId"
@@ -107,10 +135,51 @@ function handleOverlayClick() {
   margin: 0;
 }
 
+.sidebar-search {
+  position: relative;
+  padding: 8px 12px 4px;
+}
+
+.sidebar-search-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.sidebar-search-input {
+  width: 100%;
+  padding: 8px 10px 8px 32px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.sidebar-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.sidebar-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.sidebar-search-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .session-list {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: 8px 12px 12px;
 }
 
 .session-list::-webkit-scrollbar {
@@ -195,7 +264,7 @@ function handleOverlayClick() {
     height: 100vh;
     z-index: 50;
     transform: translateX(-100%);
-    transition: transform 200ms ease;
+    transition: transform 150ms ease;
   }
 
   .sidebar.open {
@@ -206,7 +275,7 @@ function handleOverlayClick() {
 /* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 200ms ease;
+  transition: opacity 150ms ease;
 }
 
 .fade-enter-from,
@@ -216,7 +285,7 @@ function handleOverlayClick() {
 
 .slide-enter-active,
 .slide-leave-active {
-  transition: transform 200ms ease;
+  transition: transform 150ms ease;
 }
 
 .slide-enter-from,

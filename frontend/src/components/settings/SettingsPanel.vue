@@ -185,13 +185,13 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   right: 0;
-  width: 320px;
+  width: 380px;
   height: 100vh;
   background: var(--bg-surface);
   border-left: 1px solid var(--border);
   box-shadow: var(--shadow-md);
   transform: translateX(100%);
-  transition: transform 200ms ease;
+  transition: transform 150ms ease;
   z-index: 100;
   display: flex;
   flex-direction: column;

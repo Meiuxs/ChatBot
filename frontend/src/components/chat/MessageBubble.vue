@@ -25,6 +25,14 @@ const showToolbar = ref(false)
 const isTouchDevice = ref(false)
 const contentRef = ref<HTMLElement | null>(null)
 const reasoningOpen = ref(false)
+const copied = ref(false)
+let copyTimer: ReturnType<typeof setTimeout> | null = null
+
+function triggerCopied() {
+  copied.value = true
+  if (copyTimer) clearTimeout(copyTimer)
+  copyTimer = setTimeout(() => { copied.value = false }, 1800)
+}
 
 onMounted(() => {
   isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
@@ -33,7 +41,6 @@ onMounted(() => {
 function handleCopy() {
   const content = props.message.content
   navigator.clipboard.writeText(content).catch(() => {
-    // Fallback for insecure contexts or older browsers
     const textarea = document.createElement('textarea')
     textarea.value = content
     textarea.style.position = 'fixed'
@@ -48,6 +55,7 @@ function handleCopy() {
       document.body.removeChild(textarea)
     }
   })
+  triggerCopied()
 }
 
 function toggleReasoning() {
@@ -158,7 +166,7 @@ async function renderMermaid() {
             <path d="M12 8h.01" />
           </svg>
           <span>思考过程</span>
-          <span class="reasoning-badge">{{ message.reasoning?.length }} 字符</span>
+          <span class="reasoning-badge">已思考</span>
         </button>
         <Transition name="reasoning-slide">
           <div v-if="reasoningOpen" class="reasoning-content">{{ message.reasoning }}</div>
@@ -171,10 +179,13 @@ async function renderMermaid() {
 
     <!-- Toolbar -->
     <div v-show="showToolbar || isTouchDevice" class="message-toolbar">
-      <button class="toolbar-btn" title="复制内容" @click="handleCopy">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <button class="toolbar-btn" :class="{ copied }" title="复制内容" @click="handleCopy">
+        <svg v-if="!copied" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="20 6 9 17 4 12" />
         </svg>
       </button>
     </div>
@@ -278,7 +289,19 @@ async function renderMermaid() {
 }
 
 .message.user .message-content :deep(code) {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.message.user .message-content :deep(pre) {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.message.user .message-content :deep(pre code) {
+  background: transparent;
+  padding: 16px;
+  border: none;
 }
 
 .message-content :deep(pre) {
@@ -422,6 +445,13 @@ async function renderMermaid() {
   outline-offset: 2px;
 }
 
+.toolbar-btn.copied {
+  background: var(--success-light);
+  color: var(--success);
+  border-color: var(--success);
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
   .message {
     max-width: 92%;
@@ -517,7 +547,8 @@ async function renderMermaid() {
 @media (prefers-reduced-motion: reduce) {
   .error-retry,
   .toolbar-btn,
-  .reasoning-chevron {
+  .reasoning-chevron,
+  .toolbar-btn.copied {
     transition: none;
   }
 }
