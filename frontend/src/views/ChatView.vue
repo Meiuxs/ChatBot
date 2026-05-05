@@ -97,6 +97,12 @@ async function onVisibilityChange() {
 .app {
   display: flex;
   height: 100vh;
+  animation: app-enter 300ms ease-out;
+}
+
+@keyframes app-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .chat-main {

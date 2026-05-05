@@ -121,11 +121,6 @@ const apiConfigured = computed(() => {
       @keydown.enter="startEditTitle"
     >{{ chatStore.currentSession?.title || '新对话' }}</h1>
 
-    <div class="api-status" :class="apiConfigured ? 'configured' : 'unconfigured'" :title="apiConfigured ? 'API Key 已配置' : 'API Key 未配置'">
-      <span class="api-status-dot" />
-      <span class="api-status-text">{{ apiConfigured ? '已配置' : '未配置' }}</span>
-    </div>
-
     <button class="btn-icon" title="设置" @click="emit('openSettings')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <circle cx="12" cy="12" r="3" />
@@ -134,6 +129,7 @@ const apiConfigured = computed(() => {
     </button>
 
     <div class="user-menu">
+      <span class="api-dot" :class="apiConfigured ? 'on' : 'off'" :title="apiConfigured ? 'API Key 已配置' : 'API Key 未配置'" />
       <button class="user-avatar" title="用户菜单" @click="toggleUserDropdown">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -213,38 +209,23 @@ const apiConfigured = computed(() => {
   box-shadow: 0 0 0 2px var(--accent-light);
 }
 
-/* API Key status */
-.api-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: default;
-  transition: background var(--transition);
-}
-
-.api-status.unconfigured {
-  background: var(--danger-light);
-  color: var(--danger);
-}
-
-.api-status.configured {
-  background: var(--success-light);
-  color: var(--success);
-}
-
-.api-status-dot {
-  width: 6px;
-  height: 6px;
+/* API Key status dot */
+.api-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: currentColor;
+  flex-shrink: 0;
+  transition: background var(--transition);
+  margin-right: -4px;
 }
 
-.api-status-text {
-  font-size: 12px;
+.api-dot.on {
+  background: var(--success);
+  box-shadow: 0 0 4px var(--success);
+}
+
+.api-dot.off {
+  background: var(--text-tertiary);
 }
 
 /* Icon button */

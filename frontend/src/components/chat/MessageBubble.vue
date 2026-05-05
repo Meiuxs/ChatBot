@@ -204,10 +204,15 @@ async function renderMermaid() {
 
 .message.user {
   margin-left: auto;
-  background: var(--text-primary);
+  background: linear-gradient(135deg, var(--text-primary) 0%, oklch(20% 0.006 250) 100%);
   color: #ffffff;
   border-bottom-right-radius: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark .message.user {
+  background: linear-gradient(135deg, oklch(30% 0.01 260) 0%, oklch(22% 0.008 250) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .message.assistant {
@@ -215,8 +220,12 @@ async function renderMermaid() {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-bottom-left-radius: 2px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   color: var(--text-primary);
+}
+
+.dark .message.assistant {
+  background: var(--bg-elevated);
 }
 
 .message.error {

@@ -8,12 +8,20 @@ const settingsStore = useSettingsStore()
 
 const inputText = ref('')
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
-const thinkingEnabled = ref(false)
+const thinkingEnabled = ref(localStorage.getItem('chatbot_thinking') === 'true')
+
+function persistThinking(val: boolean) {
+  localStorage.setItem('chatbot_thinking', String(val))
+}
+const sendFlash = ref(false)
+let sendFlashTimer: ReturnType<typeof setTimeout> | null = null
 
 const showThinkingToggle = computed(() => settingsStore.settings.provider === 'deepseek')
 
 function toggleThinking() {
-  thinkingEnabled.value = !thinkingEnabled.value
+  const next = !thinkingEnabled.value
+  thinkingEnabled.value = next
+  persistThinking(next)
 }
 
 const isStreaming = computed(() => {
@@ -68,6 +76,11 @@ function handleSend() {
   if (textareaRef.value) {
     textareaRef.value.style.height = 'auto'
   }
+
+  // Brief flash feedback
+  sendFlash.value = true
+  if (sendFlashTimer) clearTimeout(sendFlashTimer)
+  sendFlashTimer = setTimeout(() => { sendFlash.value = false }, 400)
 }
 
 function handleStop() {
@@ -102,6 +115,7 @@ function handleStop() {
       <textarea
         ref="textareaRef"
         class="chat-input"
+        :class="{ flash: sendFlash }"
         :value="inputText"
         placeholder="输入消息，Enter 发送，Shift+Enter 换行"
         rows="1"
@@ -261,6 +275,11 @@ function handleStop() {
 .chat-input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.chat-input.flash {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px var(--success-light);
 }
 
 .chat-input::placeholder {

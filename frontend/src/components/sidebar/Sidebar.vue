@@ -94,10 +94,11 @@ function handleOverlayClick() {
           <p>未找到匹配的会话</p>
         </div>
         <SessionItem
-          v-for="session in filteredSessions"
+          v-for="(session, index) in filteredSessions"
           :key="session.id"
           :session="session"
           :active="session.id === chatStore.currentSessionId"
+          :style="{ '--stagger': index }"
           @select="handleSelectSession(session.id)"
           @delete="handleDeleteSession(session.id)"
           @rename="(title: string) => handleRenameSession(session.id, title)"
@@ -215,6 +216,16 @@ function handleOverlayClick() {
 .session-list-empty p {
   font-size: 13px;
   line-height: 1.5;
+}
+
+.session-list > :deep(.session-item) {
+  animation: item-enter 300ms ease-out both;
+  animation-delay: calc(var(--stagger, 0) * 30ms);
+}
+
+@keyframes item-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Icon button */

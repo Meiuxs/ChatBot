@@ -345,6 +345,17 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .settings-panel {
     width: 100%;
+    height: 85vh;
+    top: auto;
+    bottom: 0;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    transform: translateY(100%);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .settings-panel.open {
+    transform: translateY(0);
   }
 }
 

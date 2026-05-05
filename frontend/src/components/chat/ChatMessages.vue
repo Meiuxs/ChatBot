@@ -157,7 +157,7 @@ const displayItems = computed<DisplayItem[]>(() => {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 20px;
+  padding: 32px 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -196,8 +196,8 @@ const displayItems = computed<DisplayItem[]>(() => {
   height: 480px;
   border-radius: 50%;
   background: radial-gradient(circle, var(--accent-light) 0%, transparent 70%);
-  opacity: 0.4;
-  top: -120px;
+  opacity: 0.3;
+  top: -160px;
   right: -160px;
   pointer-events: none;
 }
@@ -205,13 +205,13 @@ const displayItems = computed<DisplayItem[]>(() => {
 .empty-state::after {
   content: '';
   position: absolute;
-  width: 320px;
-  height: 320px;
+  width: 360px;
+  height: 360px;
   border-radius: 50%;
   background: radial-gradient(circle, var(--accent-light) 0%, transparent 70%);
-  opacity: 0.25;
-  bottom: -80px;
-  left: -120px;
+  opacity: 0.15;
+  bottom: -100px;
+  left: -140px;
   pointer-events: none;
 }
 
@@ -334,7 +334,7 @@ const displayItems = computed<DisplayItem[]>(() => {
 
 @media (max-width: 768px) {
   .chat-messages {
-    padding: 16px;
+    padding: 24px 16px 12px;
   }
 }
 </style>
