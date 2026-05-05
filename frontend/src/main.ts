@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import { createApp, nextTick } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
@@ -21,11 +21,16 @@ async function bootstrap() {
   app.use(router)
 
   // 当 API 返回 401 时，通过 router 跳转而不刷新页面
+  // 使用 nextTick 避免与进行中的导航产生竞争条件
   window.addEventListener('auth:unauthorized', () => {
     const store = useUserStore()
     store.isAuthenticated = false
     store.user = null
-    router.replace('/login').catch(() => {})
+    if (router.currentRoute.value.path !== '/login') {
+      nextTick(() => {
+        router.replace('/login').catch(() => {})
+      })
+    }
   })
 
   // Load settings from localStorage first (instant, no network call)
