@@ -2,6 +2,7 @@ import logging
 import logging.config
 import sys
 import os
+from app.core.trace import TraceFilter
 
 _LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
 _LOG_FILE = os.path.join(_LOG_DIR, "backend.log")
@@ -14,9 +15,14 @@ def _ensure_log_dir():
 _LOG_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "trace": {
+            "()": TraceFilter,
+        },
+    },
     "formatters": {
         "default": {
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            "format": "%(asctime)s [%(trace_id)s] %(name)s - %(levelname)s - %(message)s",
         },
     },
     "handlers": {
@@ -27,12 +33,14 @@ _LOG_CONFIG = {
             "backupCount": 30,
             "encoding": "utf-8",
             "formatter": "default",
+            "filters": ["trace"],
             "level": "INFO",
         },
         "console": {
             "class": "logging.StreamHandler",
             "stream": "ext://sys.stdout",
             "formatter": "default",
+            "filters": ["trace"],
             "level": "INFO",
         },
     },

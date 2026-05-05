@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import { useUserStore } from './stores/userStore'
 import { useSettingsStore } from './stores/settingsStore'
+import { logger } from './utils/logger'
 import './assets/styles/main.css'
 import 'highlight.js/styles/github-dark.min.css'
 
@@ -12,6 +13,17 @@ async function bootstrap() {
   const pinia = createPinia()
 
   app.use(pinia)
+
+  // Capture Vue errors
+  app.config.errorHandler = (err, _instance, info) => {
+    logger.error(`Vue error [${info}]`, err instanceof Error ? err.message : String(err))
+  }
+
+  // Capture unhandled promise rejections
+  window.onunhandledrejection = (event) => {
+    const msg = event.reason instanceof Error ? event.reason.message : String(event.reason)
+    logger.error('Unhandled promise rejection', msg)
+  }
 
   // Auth check MUST happen before router installation,
   // otherwise the route guard runs before isAuthenticated is set

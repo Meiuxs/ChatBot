@@ -6,6 +6,7 @@ from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.api.deps import init_jwks
 from app.core.database import get_supabase
+from app.core.trace import set_trace_id
 from app.providers import openai as openai_provider, deepseek as deepseek_provider
 import logging
 import time
@@ -117,8 +118,10 @@ async def rate_limit_and_timing_middleware(request: Request, call_next):
         raise
 
     # 生成请求追踪 ID 并注入 request.state
-    request_id = uuid.uuid4().hex[:12]
-    request.state.request_id = request_id
+    # 优先使用前端传递的 trace_id，实现前后端关联
+    trace_id = request.headers.get("X-Trace-ID") or uuid.uuid4().hex[:12]
+    request.state.request_id = trace_id
+    set_trace_id(trace_id)
 
     start = time.time()
     response = await call_next(request)
@@ -130,10 +133,10 @@ async def rate_limit_and_timing_middleware(request: Request, call_next):
     qs = request.url.query or ""
     logger.info(
         "REQ [%s] %s %s → %d (%.2fs) ip=%s ua=%s qs=%s",
-        request_id, request.method, request.url.path,
+        trace_id, request.method, request.url.path,
         response.status_code, duration, client_ip, ua, qs,
     )
-    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Request-ID"] = trace_id
     return response
 
 

@@ -1,6 +1,8 @@
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 const DEFAULT_TIMEOUT = 15_000 // 15 秒
 
+import { logger } from '../utils/logger'
+
 function getToken(): string | null {
   try {
     const item = localStorage.getItem('chatbot_auth_token')
@@ -12,7 +14,10 @@ function getToken(): string | null {
 
 function authHeaders(): Record<string, string> {
   const token = getToken()
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Trace-ID': logger.getTraceId(),
+  }
   if (token) headers['Authorization'] = `Bearer ${token}`
   return headers
 }
@@ -28,6 +33,7 @@ export class ApiError extends Error {
 
 /** 清除登录态并派发事件，由 router guard 处理跳转 */
 function onUnauthorized(): void {
+  logger.warn('Auth token expired or invalid, redirecting to login')
   localStorage.removeItem('chatbot_auth_token')
   localStorage.removeItem('chatbot_user')
   localStorage.setItem('chatbot_is_logged_in', 'false')
@@ -56,6 +62,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
       onUnauthorized()
     }
     const body = await response.json().catch(() => ({}))
+    logger.error('API request failed', {
+      status: response.status,
+      path: response.url,
+      error: body.error || body.detail || `HTTP ${response.status}`,
+    })
     throw new ApiError(response.status, body.error || body.detail || `HTTP ${response.status}`)
   }
   return response.json()
@@ -138,6 +149,11 @@ export const apiClient = {
           onUnauthorized()
         }
         const errBody = await res.json().catch(() => ({}))
+        logger.error('Stream request failed', {
+          status: res.status,
+          path,
+          error: errBody.error || errBody.detail || `HTTP ${res.status}`,
+        })
         throw new ApiError(res.status, errBody.error || errBody.detail || `HTTP ${res.status}`)
       }
 
