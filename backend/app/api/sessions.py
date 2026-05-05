@@ -2,16 +2,17 @@ import asyncio
 import logging
 import time
 import uuid
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from supabase import Client, create_client
 from app.core.database import get_supabase
 from app.core.config import get_settings
 from app.api.deps import (
     get_current_user,
-    ensure_session_owned,
+    check_session_owned_cached,
     get_user_data_version,
     bump_user_data_version,
+    CacheDomain,
 )
 
 # 方案 4: 独立的写入客户端，与 Depends(get_supabase) 返回的客户端隔离，支持并行 asyncio.to_thread
@@ -65,7 +66,7 @@ async def get_sessions(
 ):
     start = time.perf_counter()
     user_id = current_user["id"]
-    version = get_user_data_version(user_id)
+    version = get_user_data_version(user_id, CacheDomain.SESSIONS)
     logger.info("SESSIONS list user=%s page=%d limit=%d version=%d", user_id, page, limit, version)
     now = time.time()
 
@@ -132,7 +133,7 @@ async def create_session(
         payload["title"] = body["title"]
 
     response = await asyncio.to_thread(lambda: supabase.table("sessions").insert(payload).execute())
-    bump_user_data_version(user_id)
+    bump_user_data_version(user_id, CacheDomain.SESSIONS)
     session_id = response.data[0]["id"]
     elapsed = (time.perf_counter() - start) * 1000
     logger.info("SESSIONS create_done user=%s session=%s elapsed_ms=%.0f", user_id, session_id, elapsed)
@@ -190,7 +191,8 @@ async def sync_sessions(
                          (time.perf_counter() - start) * 1000)
         raise
 
-    bump_user_data_version(user_id)
+    bump_user_data_version(user_id, CacheDomain.SESSIONS)
+    bump_user_data_version(user_id, CacheDomain.MESSAGES)
     elapsed = (time.perf_counter() - start) * 1000
     logger.info(
         "SESSIONS sync_done user=%s sessions=%d messages=%d elapsed_ms=%.0f",
@@ -216,7 +218,7 @@ async def delete_session(
             "user_id", user_id
         ).execute()
     )
-    bump_user_data_version(user_id)
+    bump_user_data_version(user_id, CacheDomain.SESSIONS)
     elapsed = (time.perf_counter() - start) * 1000
     logger.info("SESSIONS delete_done user=%s session=%s elapsed_ms=%.0f", user_id, session_id, elapsed)
     return {"success": True}
@@ -241,7 +243,7 @@ async def update_session(
             }
         ).eq("id", session_id).eq("user_id", user_id).execute()
     )
-    bump_user_data_version(user_id)
+    bump_user_data_version(user_id, CacheDomain.SESSIONS)
     elapsed = (time.perf_counter() - start) * 1000
     logger.info("SESSIONS update_done user=%s session=%s elapsed_ms=%.0f", user_id, session_id, elapsed)
     return {"success": True}
@@ -251,13 +253,14 @@ async def update_session(
 async def get_messages(
     session_id: str,
     current_user: dict = Depends(get_current_user),
-    _session: dict = Depends(ensure_session_owned),
     supabase: Client = Depends(get_supabase),
 ):
     start = time.perf_counter()
     user_id = current_user["id"]
     logger.info("SESSIONS messages_get user=%s session=%s", user_id, session_id)
-    version = get_user_data_version(user_id)
+    if not await check_session_owned_cached(session_id, current_user, supabase):
+        raise HTTPException(status_code=404, detail="会话不存在或无访问权限")
+    version = get_user_data_version(user_id, CacheDomain.MESSAGES)
     cache_key = (user_id, session_id)
     cached = _messages_cache.get(cache_key)
     now = time.time()

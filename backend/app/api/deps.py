@@ -2,6 +2,7 @@ import asyncio
 import threading
 import time
 import logging
+from enum import StrEnum
 import httpx
 import jwt
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -12,14 +13,19 @@ from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
+class CacheDomain(StrEnum):
+    SETTINGS = "st"
+    SESSIONS = "ss"
+    MESSAGES = "ms"
+
 _settings_cache: dict[str, tuple[dict, float]] = {}
 _settings_cache_lock = asyncio.Lock()
 _SETTINGS_CACHE_TTL = 300
 _session_ownership_cache: dict[tuple[str, str], tuple[bool, float, int]] = {}
 _session_ownership_lock = asyncio.Lock()
 _SESSION_OWNERSHIP_TTL = 300
-_user_data_version: dict[str, int] = {}
-_user_data_version_lock = threading.Lock()
+_cache_versions: dict[str, dict[str, int]] = {}
+_cache_versions_lock = threading.Lock()
 
 # 从 JWKS 提取的 EC 公钥（首次请求时初始化，之后缓存）
 _ec_public_key: ec.EllipticCurvePublicKey | None = None
@@ -183,7 +189,7 @@ async def check_session_owned_cached(
     user_id = current_user["id"]
     key = (user_id, session_id)
     now = time.time()
-    version = get_user_data_version(user_id)
+    version = get_user_data_version(user_id, CacheDomain.SESSIONS)
     async with _session_ownership_lock:
         cached = _session_ownership_cache.get(key)
         if cached and (now - cached[1]) < _SESSION_OWNERSHIP_TTL and cached[2] == version:
@@ -207,14 +213,16 @@ async def check_session_owned_cached(
     return ok
 
 
-def bump_user_data_version(user_id: str) -> int:
-    with _user_data_version_lock:
-        curr = _user_data_version.get(user_id, 0) + 1
-        _user_data_version[user_id] = curr
-    logger.info("CACHE bump_version user=%s new_version=%d", user_id, curr)
+def bump_user_data_version(user_id: str, domain: CacheDomain = CacheDomain.SESSIONS) -> int:
+    with _cache_versions_lock:
+        user_versions = _cache_versions.get(user_id, {})
+        curr = user_versions.get(domain, 0) + 1
+        user_versions[domain] = curr
+        _cache_versions[user_id] = user_versions
+    logger.info("CACHE bump_version user=%s domain=%s new_version=%d", user_id, domain, curr)
     return curr
 
 
-def get_user_data_version(user_id: str) -> int:
-    with _user_data_version_lock:
-        return _user_data_version.get(user_id, 0)
+def get_user_data_version(user_id: str, domain: CacheDomain = CacheDomain.SESSIONS) -> int:
+    with _cache_versions_lock:
+        return _cache_versions.get(user_id, {}).get(domain, 0)

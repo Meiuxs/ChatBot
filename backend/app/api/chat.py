@@ -9,7 +9,7 @@ from app.core.database import get_supabase
 from app.schemas.chat import SendMessageRequest
 from app.providers.factory import get_provider, get_provider_for_model
 from app.providers.base import ChatMessage
-from app.api.deps import get_current_user, get_user_settings, bump_user_data_version, check_session_owned_cached
+from app.api.deps import get_current_user, get_user_settings, bump_user_data_version, check_session_owned_cached, CacheDomain
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ async def _persist_messages(
         await asyncio.to_thread(
             lambda: supabase.table("messages").insert(rows).execute()
         )
-        bump_user_data_version(user_id)
+        bump_user_data_version(user_id, CacheDomain.MESSAGES)
         elapsed = (time.perf_counter() - start) * 1000
         logger.info(
             "CHAT persist_done user=%s session=%s total_ms=%.2f chars=%d reasoning=%s",

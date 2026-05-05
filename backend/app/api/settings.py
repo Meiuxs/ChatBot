@@ -7,7 +7,7 @@ from supabase import Client
 from app.core.database import get_supabase
 from app.core.security import encrypt_api_key
 from app.schemas.settings import SettingsResponse, UpdateSettingsRequest
-from app.api.deps import get_current_user, get_user_settings, bump_user_data_version
+from app.api.deps import get_current_user, get_user_settings, bump_user_data_version, CacheDomain
 from app.api import deps
 
 router = APIRouter()
@@ -73,7 +73,7 @@ async def update_settings(
 
     # 立即失效缓存，避免更新后短时间读取到旧值
     deps._settings_cache.pop(user_id, None)
-    bump_user_data_version(user_id)
+    bump_user_data_version(user_id, CacheDomain.SETTINGS)
     elapsed = (time.perf_counter() - start) * 1000
     logger.info("SETTINGS update_done user=%s elapsed_ms=%.0f", user_id, elapsed)
     return {"success": True}
