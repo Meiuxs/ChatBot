@@ -18,6 +18,18 @@ class Settings(BaseSettings):
         "https://frontend-meiux.vercel.app",
     ]
 
+    def model_post_init(self, _ctx):
+        """确保已知的生产环境域名始终在 CORS 列表中，不受环境变量覆盖影响"""
+        known_production = {
+            "https://chatbot-meiux.vercel.app",
+            "https://frontend-meiux.vercel.app",
+            "https://frontend-ochre-six-97.vercel.app",
+        }
+        existing = set(self.cors_origins or [])
+        missing = known_production - existing
+        if missing:
+            self.cors_origins = self.cors_origins + list(missing)
+
     class Config:
         env_file = ".env"
 
