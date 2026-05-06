@@ -160,13 +160,7 @@ async function renderMermaid() {
           >
             <polyline points="9 18 15 12 9 6" />
           </svg>
-          <svg class="reasoning-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4" />
-            <path d="M12 8h.01" />
-          </svg>
           <span>思考过程</span>
-          <span class="reasoning-badge">已思考</span>
         </button>
         <Transition name="reasoning-slide">
           <div v-if="reasoningOpen" class="reasoning-content">{{ message.reasoning }}</div>
@@ -197,30 +191,29 @@ async function renderMermaid() {
   max-width: 680px;
   padding: 14px 18px;
   border-radius: var(--radius-lg);
-  font-size: 15px;
+  font-size: var(--text-base);
   line-height: 1.6;
   position: relative;
 }
 
 .message.user {
   margin-left: auto;
-  background: linear-gradient(135deg, var(--text-primary) 0%, oklch(20% 0.006 250) 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--user-bubble-from) 0%, var(--user-bubble-to) 100%);
+  color: var(--bg-surface);
   border-bottom-right-radius: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .dark .message.user {
-  background: linear-gradient(135deg, oklch(30% 0.01 260) 0%, oklch(22% 0.008 250) 100%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(135deg, var(--user-bubble-from) 0%, var(--user-bubble-to) 100%);
+  box-shadow: var(--shadow-md);
 }
 
 .message.assistant {
   align-self: flex-start;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
   border-bottom-left-radius: 2px;
-  box-shadow: var(--shadow-md);
   color: var(--text-primary);
 }
 
@@ -254,7 +247,7 @@ async function renderMermaid() {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--danger);
   cursor: pointer;
@@ -290,9 +283,9 @@ async function renderMermaid() {
 }
 
 .message-content :deep(code) {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13.5px;
-  background: rgba(0, 0, 0, 0.06);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  background: var(--code-inline-bg);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -324,7 +317,7 @@ async function renderMermaid() {
   display: block;
   padding: 16px;
   overflow-x: auto;
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.5;
   background: transparent;
 }
@@ -389,7 +382,7 @@ async function renderMermaid() {
   width: 100%;
   border-collapse: collapse;
   margin: 14px 0;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .message-content :deep(th),
@@ -481,7 +474,7 @@ async function renderMermaid() {
   border-radius: var(--radius-sm);
   background: var(--bg-elevated);
   color: var(--text-tertiary);
-  font-size: 13px;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: background var(--transition), color var(--transition);
   width: 100%;
@@ -507,11 +500,6 @@ async function renderMermaid() {
   transform: rotate(90deg);
 }
 
-.reasoning-icon {
-  flex-shrink: 0;
-  opacity: 0.6;
-}
-
 /* Reasoning slide transition */
 .reasoning-slide-enter-active,
 .reasoning-slide-leave-active {
@@ -535,7 +523,7 @@ async function renderMermaid() {
 
 .reasoning-badge {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--text-xs);
   opacity: 0.6;
 }
 
@@ -545,12 +533,17 @@ async function renderMermaid() {
   border-left: 3px solid var(--accent);
   background: var(--bg-elevated);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+.message:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

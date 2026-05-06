@@ -46,7 +46,7 @@ function onPageHide() {
     const raw = localStorage.getItem('chatbot_auth_token')
     const token = raw ? JSON.parse(raw) : null
     fetch(`${API_BASE}/api/v1/sessions/sync`, {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

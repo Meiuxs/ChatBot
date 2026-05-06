@@ -224,14 +224,14 @@ const displayItems = computed<DisplayItem[]>(() => {
 }
 
 .empty-state-title {
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 8px;
 }
 
 .empty-state-desc {
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   max-width: 280px;
   margin: 0;
@@ -246,7 +246,7 @@ const displayItems = computed<DisplayItem[]>(() => {
   background: var(--warn-light);
   border: 1px solid var(--warn);
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
 }
 
@@ -267,13 +267,13 @@ const displayItems = computed<DisplayItem[]>(() => {
 
 .quick-action-btn {
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition);
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
   font-family: inherit;
   white-space: nowrap;
 }
@@ -294,7 +294,6 @@ const displayItems = computed<DisplayItem[]>(() => {
   display: flex;
   content-visibility: auto;
   contain-intrinsic-size: auto 200px;
-  contain: layout style;
 }
 
 /* Date separator */
@@ -313,7 +312,7 @@ const displayItems = computed<DisplayItem[]>(() => {
 }
 
 .date-separator-label {
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 500;
   color: var(--text-tertiary);
   flex-shrink: 0;
@@ -327,7 +326,7 @@ const displayItems = computed<DisplayItem[]>(() => {
   gap: 8px;
   padding: 16px 20px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
+  box-shadow: 0 0 0 1px var(--border);
   border-radius: var(--radius-lg);
   align-self: flex-start;
 }

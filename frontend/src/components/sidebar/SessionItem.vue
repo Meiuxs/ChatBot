@@ -190,7 +190,7 @@ function onInputKeydown(event: KeyboardEvent) {
 
 .session-item-title {
   flex: 1;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -199,7 +199,7 @@ function onInputKeydown(event: KeyboardEvent) {
 
 .session-item-input {
   flex: 1;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
   background: var(--bg-surface);
   border: 1px solid var(--accent);
@@ -271,7 +271,7 @@ function onInputKeydown(event: KeyboardEvent) {
 }
 
 .session-item-count {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-tertiary);
   flex-shrink: 0;
 }

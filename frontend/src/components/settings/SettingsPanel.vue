@@ -168,7 +168,7 @@ onUnmounted(() => {
 .settings-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--overlay);
   z-index: 99;
   opacity: 0;
   pointer-events: none;
@@ -207,12 +207,12 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 0 var(--border);
   flex-shrink: 0;
 }
 
 .settings-title {
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -253,7 +253,7 @@ onUnmounted(() => {
 
 .settings-tab {
   padding: 12px 16px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-secondary);
   background: none;
@@ -319,7 +319,7 @@ onUnmounted(() => {
   background: var(--accent);
   border: none;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: white;
   cursor: pointer;
@@ -329,7 +329,7 @@ onUnmounted(() => {
 
 .btn-primary:hover {
   background: var(--accent-hover);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-primary:focus-visible {

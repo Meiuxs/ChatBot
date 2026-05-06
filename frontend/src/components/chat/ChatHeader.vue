@@ -162,13 +162,13 @@ const apiConfigured = computed(() => {
   gap: 12px;
   padding: 0 20px;
   height: var(--header-height);
-  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 0 var(--border);
   background: var(--bg-surface);
 }
 
 .chat-title {
   flex: 1;
-  font-size: 15px;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -193,7 +193,7 @@ const apiConfigured = computed(() => {
 
 .chat-title-input {
   flex: 1;
-  font-size: 15px;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
   background: var(--bg-surface);
@@ -216,7 +216,6 @@ const apiConfigured = computed(() => {
   border-radius: 50%;
   flex-shrink: 0;
   transition: background var(--transition);
-  margin-right: -4px;
 }
 
 .api-dot.on {
@@ -312,12 +311,12 @@ const apiConfigured = computed(() => {
 }
 
 .user-dropdown-label {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-tertiary);
 }
 
 .user-dropdown-email {
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -333,7 +332,7 @@ const apiConfigured = computed(() => {
   gap: 10px;
   width: 100%;
   padding: 10px 16px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--text-secondary);
   transition: background var(--transition), color var(--transition);
 }

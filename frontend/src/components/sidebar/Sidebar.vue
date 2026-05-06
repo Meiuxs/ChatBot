@@ -81,17 +81,19 @@ function handleOverlayClick() {
 
       <div class="session-list">
         <div v-if="filteredSessions.length === 0" class="session-list-empty">
-          <svg v-if="searchQuery" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <svg v-else width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-          <p>暂无会话</p>
-        </div>
-        <div v-if="filteredSessions.length === 0 && searchQuery.trim()" class="session-list-empty">
-          <p>未找到匹配的会话</p>
+          <template v-if="searchQuery.trim()">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <p>未找到匹配的会话</p>
+          </template>
+          <template v-else>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <p>暂无会话</p>
+          </template>
         </div>
         <SessionItem
           v-for="(session, index) in filteredSessions"
@@ -112,7 +114,7 @@ function handleOverlayClick() {
 .sidebar {
   width: var(--sidebar-width);
   background: var(--bg-surface);
-  border-right: 1px solid var(--border);
+  box-shadow: 1px 0 0 0 var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -124,11 +126,11 @@ function handleOverlayClick() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 0 var(--border);
 }
 
 .sidebar-title {
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: 0.02em;
@@ -153,7 +155,7 @@ function handleOverlayClick() {
 .sidebar-search-input {
   width: 100%;
   padding: 8px 10px 8px 32px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
   background: var(--bg-base);
   border: 1px solid var(--border);
@@ -214,7 +216,7 @@ function handleOverlayClick() {
 }
 
 .session-list-empty p {
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
@@ -264,7 +266,7 @@ function handleOverlayClick() {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--overlay);
     z-index: 40;
   }
 

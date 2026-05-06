@@ -90,60 +90,54 @@ function handleStop() {
 
 <template>
   <div class="chat-input-area">
-    <!-- Thinking mode toggle (only for DeepSeek) -->
-    <div
-      v-if="showThinkingToggle"
-      class="thinking-bar"
-      :class="{ active: thinkingEnabled }"
-    >
-      <div class="thinking-bar-left">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5z"/>
-        </svg>
-        <span>深度思考模式</span>
-      </div>
-      <button
-        class="thinking-switch"
-        :class="{ active: thinkingEnabled }"
-        :disabled="isStreaming"
-        @click="toggleThinking"
-      >
-        <span class="thinking-switch-knob"></span>
-      </button>
-    </div>
     <div class="chat-input-container">
-      <textarea
-        ref="textareaRef"
-        class="chat-input"
-        :class="{ flash: sendFlash }"
-        :value="inputText"
-        placeholder="输入消息，Enter 发送，Shift+Enter 换行"
-        rows="1"
-        @input="handleInput"
-        @keydown="handleKeydown"
-      />
-      <button
-        v-if="isStreaming"
-        class="btn-stop"
-        title="停止生成"
-        @click="handleStop"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <rect x="6" y="6" width="12" height="12" rx="2" />
-        </svg>
-      </button>
-      <button
-        v-else
-        class="btn-send"
-        :disabled="!canSend"
-        title="发送"
-        @click="handleSend"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13" />
-          <polygon points="22 2 15 22 11 13 2 9 22 2" />
-        </svg>
-      </button>
+      <div v-if="showThinkingToggle" class="thinking-row">
+        <button
+          class="thinking-toggle"
+          :class="{ active: thinkingEnabled }"
+          :disabled="isStreaming"
+          @click="toggleThinking"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5z"/>
+          </svg>
+          <span>深度思考</span>
+        </button>
+      </div>
+      <div class="input-row">
+        <textarea
+          ref="textareaRef"
+          class="chat-input"
+          :class="{ flash: sendFlash }"
+          :value="inputText"
+          placeholder="输入消息，Enter 发送，Shift+Enter 换行"
+          rows="1"
+          @input="handleInput"
+          @keydown="handleKeydown"
+        />
+        <button
+          v-if="isStreaming"
+          class="btn-stop"
+          title="停止生成"
+          @click="handleStop"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12" rx="2" />
+          </svg>
+        </button>
+        <button
+          v-else
+          class="btn-send"
+          :disabled="!canSend"
+          title="发送"
+          @click="handleSend"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -155,99 +149,63 @@ function handleStop() {
   background: var(--bg-base);
 }
 
-/* Thinking bar toggle */
-.thinking-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 20px 8px;
-  padding: 10px 14px;
-  font-size: 16px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  transition: border-color var(--transition), background var(--transition);
+/* Input container */
+.chat-input-container {
+  padding: 0 20px 16px;
+  background: var(--bg-base);
 }
 
 @media (max-width: 768px) {
-  .thinking-bar {
-    margin: 0 12px 8px;
+  .chat-input-container {
+    padding: 0 12px 12px;
   }
 }
 
-.thinking-bar.active {
-  border-color: var(--accent);
-  background: var(--accent-light);
+/* Thinking toggle row */
+.thinking-row {
+  display: flex;
+  padding: 6px 0 4px;
 }
 
-.thinking-bar-left {
-  display: flex;
+.thinking-toggle {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: var(--text-xs);
   font-weight: 500;
   color: var(--text-tertiary);
-  transition: color var(--transition);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
 }
 
-.thinking-bar.active .thinking-bar-left {
+.thinking-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.thinking-toggle.active {
   color: var(--accent);
 }
 
-.thinking-bar-left svg {
-  flex-shrink: 0;
+.thinking-toggle.active:hover {
+  background: var(--accent-light);
 }
 
-/* Toggle switch */
-.thinking-switch {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  background: var(--border);
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background var(--transition);
-  flex-shrink: 0;
-  padding: 0;
-}
-
-.thinking-switch.active {
-  background: var(--accent);
-}
-
-.thinking-switch:focus-visible {
+.thinking-toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.thinking-switch:disabled {
+.thinking-toggle:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-.thinking-switch-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-  transition: transform var(--transition);
-}
-
-.thinking-switch.active .thinking-switch-knob {
-  transform: translateX(20px);
-}
-
 /* Input row */
-.chat-input-container {
+.input-row {
   display: flex;
   gap: 12px;
-  padding: 10px 20px 20px;
-  background: var(--bg-base);
   align-items: flex-end;
 }
 
@@ -257,7 +215,7 @@ function handleStop() {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 12px 16px;
-  font-size: 16px;
+  font-size: var(--text-base);
   color: var(--text-primary);
   resize: none;
   min-height: 48px;
@@ -270,11 +228,6 @@ function handleStop() {
 .chat-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-light);
-}
-
-.chat-input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 .chat-input.flash {
@@ -356,9 +309,7 @@ function handleStop() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .thinking-bar,
-  .thinking-switch,
-  .thinking-switch-knob,
+  .thinking-toggle,
   .chat-input,
   .btn-stop,
   .btn-send {
