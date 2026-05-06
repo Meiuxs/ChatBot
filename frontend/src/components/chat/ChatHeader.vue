@@ -162,7 +162,6 @@ const apiConfigured = computed(() => {
   gap: 12px;
   padding: 0 20px;
   height: var(--header-height);
-  box-shadow: 0 1px 0 0 var(--border);
   background: var(--bg-surface);
 }
 

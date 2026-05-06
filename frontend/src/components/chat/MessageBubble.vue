@@ -204,11 +204,6 @@ async function renderMermaid() {
   box-shadow: var(--shadow-md);
 }
 
-.dark .message.user {
-  background: linear-gradient(135deg, var(--user-bubble-from) 0%, var(--user-bubble-to) 100%);
-  box-shadow: var(--shadow-md);
-}
-
 .message.assistant {
   align-self: flex-start;
   background: var(--bg-surface);
@@ -221,19 +216,11 @@ async function renderMermaid() {
   background: var(--bg-elevated);
 }
 
-.message.error {
-  align-self: flex-start;
-  background: var(--warn-light);
-  border: 1px solid var(--danger-border);
-  color: var(--danger);
-  border-bottom-left-radius: 4px;
-}
-
-/* Error content */
 .error-text {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  color: var(--danger);
 }
 
 .error-text svg {
@@ -291,13 +278,13 @@ async function renderMermaid() {
 }
 
 .message.user .message-content :deep(code) {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
 }
 
 .message.user .message-content :deep(pre) {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .message.user .message-content :deep(pre code) {
@@ -448,9 +435,7 @@ async function renderMermaid() {
 }
 
 .toolbar-btn.copied {
-  background: var(--success-light);
   color: var(--success);
-  border-color: var(--success);
   pointer-events: none;
 }
 

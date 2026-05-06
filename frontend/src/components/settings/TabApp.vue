@@ -386,7 +386,7 @@ function handleEditKeydown(e: KeyboardEvent): void {
 }
 
 .theme-option:hover {
-  border-color: var(--border-strong);
+  border-color: var(--accent);
 }
 
 .theme-option:focus-visible {
@@ -533,7 +533,7 @@ function handleEditKeydown(e: KeyboardEvent): void {
 }
 
 .shortcut-action-btn.save:hover {
-  background: var(--success-light);
+  background: oklch(from var(--success) l c h / 0.15);
   color: var(--success);
   border-color: var(--success);
 }
@@ -544,9 +544,9 @@ function handleEditKeydown(e: KeyboardEvent): void {
 }
 
 .shortcut-action-btn.del:hover {
-  background: var(--danger-light);
+  background: oklch(from var(--danger) l c h / 0.15);
   color: var(--danger);
-  border-color: var(--danger-border);
+  border-color: var(--danger);
 }
 
 .shortcut-action-btn:focus-visible {

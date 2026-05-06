@@ -80,7 +80,7 @@ function onKeydown(e: KeyboardEvent) {
   width: 90%;
   max-width: 380px;
   text-align: center;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .modal-icon {
@@ -134,7 +134,7 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 .btn-danger:hover {
-  background: var(--danger-hover);
+  filter: brightness(0.85);
 }
 
 .modal-enter-active, .modal-leave-active {

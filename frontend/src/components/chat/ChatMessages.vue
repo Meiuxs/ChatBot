@@ -243,7 +243,7 @@ const displayItems = computed<DisplayItem[]>(() => {
   gap: 8px;
   margin-top: 16px;
   padding: 10px 16px;
-  background: var(--warn-light);
+  background: oklch(from var(--warn) l c h / 0.1);
   border: 1px solid var(--warn);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);

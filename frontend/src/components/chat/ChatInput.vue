@@ -232,7 +232,7 @@ function handleStop() {
 
 .chat-input.flash {
   border-color: var(--success);
-  box-shadow: 0 0 0 3px var(--success-light);
+  box-shadow: 0 0 0 3px oklch(from var(--success) l c h / 0.2);
 }
 
 .chat-input::placeholder {
@@ -266,7 +266,6 @@ function handleStop() {
 .btn-stop:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
-  border-color: var(--border-strong);
 }
 
 .btn-stop:focus-visible {

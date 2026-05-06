@@ -261,7 +261,7 @@ function onInputKeydown(event: KeyboardEvent) {
 }
 
 .session-item-delete:hover {
-  background: var(--danger-light);
+  background: oklch(from var(--danger) l c h / 0.15);
   color: var(--danger);
 }
 

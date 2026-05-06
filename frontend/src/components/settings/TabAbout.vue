@@ -221,7 +221,7 @@ function cancelClearAllData(): void {
 }
 
 .btn-danger:hover {
-  background: var(--danger-hover);
+  filter: brightness(0.85);
 }
 
 .btn-danger:active {

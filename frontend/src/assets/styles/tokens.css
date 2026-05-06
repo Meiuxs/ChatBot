@@ -1,39 +1,57 @@
 :root {
-  --bg-base: oklch(98% 0.003 70);
-  --bg-surface: oklch(100% 0 0);
-  --bg-elevated: oklch(96% 0.005 70);
-  --bg-hover: oklch(94% 0.007 70);
-  --text-primary: oklch(13% 0.005 70);
-  --text-secondary: oklch(38% 0.008 70);
-  --text-tertiary: oklch(55% 0.006 70);
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-light: #dbeafe;
-  --border: oklch(90% 0.004 70);
-  --border-strong: oklch(84% 0.005 70);
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --danger-light: #fef2f2;
-  --danger-border: #fecaca;
-  --success: #16a34a;
-  --success-light: #dcfce7;
-  --warn: #f59e0b;
-  --warn-light: #fffbeb;
+  /* Background: unified cool-gray hue 250, 4% step between layers */
+  --bg-base: oklch(96% 0.003 250);
+  --bg-surface: oklch(92% 0.006 250);
+  --bg-elevated: oklch(88% 0.008 250);
+  --bg-hover: oklch(85% 0.01 250);
+
+  /* Text */
+  --text-primary: oklch(10% 0.005 250);
+  --text-secondary: oklch(35% 0.008 250);
+  --text-tertiary: oklch(55% 0.006 250);
+
+  /* Accent: restrained steel blue (low chroma) */
+  --accent: oklch(38% 0.06 260);
+  --accent-hover: oklch(30% 0.06 260);
+  --accent-light: oklch(86% 0.015 260);
+
+  /* Border: subtle, fewer than before */
+  --border: oklch(84% 0.008 250);
+
+  /* Semantic: minimal, no light/hover variants */
+  --danger: oklch(50% 0.16 30);
+  --success: oklch(50% 0.12 150);
+  --warn: oklch(60% 0.12 80);
+
+  /* Radius */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+
+  /* Code */
   --code-bg: oklch(18% 0.005 250);
-  --code-inline-bg: rgba(0, 0, 0, 0.06);
-  --overlay: rgba(0, 0, 0, 0.3);
-  --user-bubble-from: var(--text-primary);
-  --user-bubble-to: oklch(20% 0.006 250);
-  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.04);
-  --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.08);
-  --shadow-lg: 0 8px 30px oklch(0% 0 0 / 0.12);
+  --code-inline-bg: rgba(0, 0, 0, 0.07);
+
+  /* Overlay */
+  --overlay: rgba(0, 0, 0, 0.25);
+
+  /* User bubble: single hue family */
+  --user-bubble-from: oklch(18% 0.02 260);
+  --user-bubble-to: oklch(28% 0.03 260);
+
+  /* Shadow: minimal */
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.05);
+  --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.07);
+
+  /* Transition */
   --transition: 150ms ease;
+
+  /* Layout */
   --sidebar-width: 280px;
   --sidebar-width-wide: 300px;
   --header-height: 56px;
+
+  /* Typography */
   --font-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --text-xs: 11px;
@@ -44,33 +62,43 @@
 }
 
 .dark {
-  --bg-base: oklch(18% 0.004 250);
-  --bg-surface: oklch(22% 0.005 250);
-  --bg-elevated: oklch(25% 0.006 250);
-  --bg-hover: oklch(29% 0.007 250);
-  --text-primary: oklch(92% 0.003 250);
-  --text-secondary: oklch(70% 0.005 250);
-  --text-tertiary: oklch(50% 0.006 250);
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --accent-light: #1e3a5f;
-  --border: oklch(29% 0.007 250);
-  --border-strong: oklch(37% 0.008 250);
-  --danger: #ef4444;
-  --danger-hover: #f87171;
-  --danger-light: #3b1010;
-  --danger-border: #7f1d1d;
-  --success: #22c55e;
-  --success-light: #052e16;
-  --warn: #fbbf24;
-  --warn-light: #422006;
-  --code-inline-bg: rgba(255, 255, 255, 0.12);
+  /* Background: cooler, deeper */
+  --bg-base: oklch(14% 0.005 260);
+  --bg-surface: oklch(18% 0.007 260);
+  --bg-elevated: oklch(22% 0.009 260);
+  --bg-hover: oklch(26% 0.01 260);
+
+  /* Text */
+  --text-primary: oklch(92% 0.003 260);
+  --text-secondary: oklch(68% 0.005 260);
+  --text-tertiary: oklch(50% 0.006 260);
+
+  /* Accent: slightly brighter in dark mode for visibility */
+  --accent: oklch(58% 0.07 260);
+  --accent-hover: oklch(68% 0.07 260);
+  --accent-light: oklch(22% 0.025 260);
+
+  /* Border */
+  --border: oklch(26% 0.01 260);
+
+  /* Semantic */
+  --danger: oklch(55% 0.18 30);
+  --success: oklch(55% 0.14 150);
+  --warn: oklch(65% 0.14 80);
+
+  /* Code */
+  --code-inline-bg: rgba(255, 255, 255, 0.1);
+
+  /* Overlay */
   --overlay: rgba(0, 0, 0, 0.5);
-  --user-bubble-from: oklch(30% 0.01 260);
-  --user-bubble-to: oklch(22% 0.008 250);
+
+  /* User bubble */
+  --user-bubble-from: oklch(24% 0.03 260);
+  --user-bubble-to: oklch(18% 0.02 260);
+
+  /* Shadow: deeper in dark */
   --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.3);
   --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.4);
-  --shadow-lg: 0 8px 30px oklch(0% 0 0 / 0.5);
 }
 
 @media (min-width: 1440px) {

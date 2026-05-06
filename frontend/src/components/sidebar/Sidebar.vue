@@ -114,7 +114,6 @@ function handleOverlayClick() {
 .sidebar {
   width: var(--sidebar-width);
   background: var(--bg-surface);
-  box-shadow: 1px 0 0 0 var(--border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;

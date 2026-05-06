@@ -240,7 +240,7 @@ async function handleRegister() {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  background: linear-gradient(135deg, oklch(25% 0.04 260), oklch(15% 0.02 260));
   padding: 20px;
 }
 
@@ -349,9 +349,9 @@ async function handleRegister() {
   color: var(--danger);
   margin-bottom: 12px;
   padding: 8px 10px;
-  background: var(--danger-light);
+  background: oklch(from var(--danger) l c h / 0.1);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--danger-border);
+  border: 1px solid var(--danger);
   animation: errorShake 0.4s ease;
 }
 
